@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "760491253033",
+    "project_id": "my-crm-bansal",
+    "storage_bucket": "my-crm-bansal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:760491253033:android:5a17e2ab2eb6bf334aab38",
+        "android_client_info": {
+          "package_name": "com.example.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSAvqXDESzQfektjnoVSicYP3tg8p9JRU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
