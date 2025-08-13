@@ -9,6 +9,11 @@ import 'dart:io' show Platform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'fcm_service.dart';
 import 'services/api_service.dart';
+import 'services/auth_service.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
+import 'screens/dashboard/dashboard_screen.dart';
 
 final ValueNotifier<ThemeMode> themeModeNotifier = ValueNotifier(
   ThemeMode.light,
@@ -136,6 +141,10 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+  // Initialize services
+  await AuthService.initialize();
+  await ApiService.initializeAuthToken();
+
   // Initialize FCM service
   final fcmService = FCMService();
   await fcmService.initialize();
@@ -163,14 +172,48 @@ class MyAppWithTheme extends StatelessWidget {
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: mode,
-          initialRoute: '/login',
+          initialRoute: '/',
           routes: {
-            '/login': (context) => LoginPage(),
-            '/dashboard': (context) => DashboardPage(),
+            '/': (context) => const AuthWrapper(),
+            '/login': (context) => const LoginScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+            '/dashboard': (context) => const DashboardScreen(),
           },
         );
       },
     );
+  }
+}
+
+// Auth wrapper to check authentication status
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _checkAuthStatus(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.data == true) {
+          return const DashboardScreen();
+        } else {
+          return const LoginScreen();
+        }
+      },
+    );
+  }
+
+  Future<bool> _checkAuthStatus() async {
+    // Add a small delay to ensure AuthService is initialized
+    await Future.delayed(Duration(milliseconds: 100));
+    return AuthService.isAuthenticated;
   }
 }
 
@@ -253,7 +296,7 @@ class LoginPageState extends State<LoginPage> {
         _passwordController.text,
       );
 
-      // Store user data locally
+      // Get user profile
       if (data['user'] != null) {
         final prefs = await SharedPreferences.getInstance();
         final userData = data['user'];
@@ -326,6 +369,73 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Direct login method for testing purposes
+  Future<void> _directLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Simulate a delay to show loading state
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // Store mock user data for testing
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id', '1');
+      await prefs.setString('user_first_name', 'Test');
+      await prefs.setString('user_last_name', 'User');
+      await prefs.setString('user_email', 'test@example.com');
+      await prefs.setString('client_id', 'TEST123456');
+      await prefs.setBool('is_admin', false);
+      await prefs.setString('user_gender', 'Male');
+      await prefs.setString('user_age', '30');
+      await prefs.setString('user_marital_status', 'Single');
+      await prefs.setString('user_phone1', '+1234567890');
+      await prefs.setString('user_phone2', '+0987654321');
+      await prefs.setString('user_phone3', '');
+      await prefs.setString('user_address', '123 Test Street');
+      await prefs.setString('user_city', 'Test City');
+      await prefs.setString('user_state', 'Test State');
+      await prefs.setString('user_post_code', '12345');
+      await prefs.setString('user_country', 'Test Country');
+      await prefs.setString('contact_type1', 'Personal');
+      await prefs.setString('contact_type2', 'Secondary');
+      await prefs.setString('contact_type3', 'Not In Use');
+      await prefs.setString('email_type', 'Personal');
+      await prefs.setString('email2', 'secondary@example.com');
+      await prefs.setBool('phone_verify', true);
+      await prefs.setBool('email_verify', true);
+      await prefs.setString('visa_type', 'Student Visa');
+      await prefs.setString('visa_expiry', '2025-12-31');
+      await prefs.setString('preferred_intake', 'February 2024');
+      await prefs.setString('passport_country', 'Test Country');
+      await prefs.setString('passport_number', 'TEST123456');
+      await prefs.setString('nominated_occupation', 'Software Developer');
+      await prefs.setString('skill_assessment', 'Yes');
+      await prefs.setString('highest_qualification_aus', 'Bachelor Degree');
+      await prefs.setString('highest_qualification_overseas', 'Master Degree');
+      await prefs.setString('work_exp_aus', '2 years');
+      await prefs.setString('work_exp_overseas', '5 years');
+      await prefs.setString('english_score', '7.5');
+      await prefs.setString('theme_mode', 'light');
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Direct login failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -373,6 +483,25 @@ class LoginPageState extends State<LoginPage> {
                       _isLoading
                           ? CircularProgressIndicator(color: Colors.white)
                           : Text('Login'),
+                ),
+              ),
+              SizedBox(height: 16),
+              // Direct login button for testing
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _directLogin,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Color(
+                      0xFFF39C12,
+                    ), // Orange color to distinguish from main login
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('Direct Login (Testing)'),
                 ),
               ),
             ],
@@ -462,7 +591,7 @@ class _DashboardScaffoldState extends State<DashboardScaffold> {
 
   Future<Map<String, dynamic>> _fetchClientData() async {
     try {
-      final data = await ApiService.getUserProfile();
+      final data = await ApiService.getClientProfile();
       final prefs = await SharedPreferences.getInstance();
 
       // Update stored data with fresh data from API
@@ -1095,7 +1224,7 @@ class ClientFormPageState extends State<ClientFormPage> {
         'themeMode': 'light', // Default theme mode
       };
       try {
-        final responseData = await ApiService.updateProfile(data);
+        final responseData = await ApiService.updateClientProfile(data);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1632,13 +1761,21 @@ class AppointmentsPageState extends State<AppointmentsPage> {
 
   Future<void> _fetchAppointments() async {
     try {
-      final data = await ApiService.getAppointments();
+      final data = await ApiService.getClientAppointments();
       setState(() {
-        appointments = List<Map<String, dynamic>>.from(data);
+        // Extract the appointments list from the API response
+        if (data['data'] is List) {
+          appointments = List<Map<String, dynamic>>.from(data['data'] as List);
+        } else if (data is List) {
+          appointments = List<Map<String, dynamic>>.from(data as List);
+        } else {
+          appointments = [];
+        }
         isLoading = false;
       });
     } catch (e) {
       setState(() {
+        appointments = [];
         isLoading = false;
       });
     }
@@ -2183,13 +2320,21 @@ class MessagesPageState extends State<MessagesPage> {
 
   Future<void> _fetchMessages() async {
     try {
-      final data = await ApiService.getMessages();
+      final data = await ApiService.getClientMessages();
       setState(() {
-        messages = List<Map<String, dynamic>>.from(data);
+        // Extract the messages list from the API response
+        if (data['data'] is List) {
+          messages = List<Map<String, dynamic>>.from(data['data'] as List);
+        } else if (data is List) {
+          messages = List<Map<String, dynamic>>.from(data as List);
+        } else {
+          messages = [];
+        }
         isLoading = false;
       });
     } catch (e) {
       setState(() {
+        messages = [];
         isLoading = false;
       });
     }
@@ -2567,10 +2712,11 @@ class MessagesPageState extends State<MessagesPage> {
                             final navigator = Navigator.of(context);
 
                             try {
-                              final responseData = await ApiService.sendMessage(
-                                subjectController.text,
-                                messageController.text,
-                              );
+                              final responseData =
+                                  await ApiService.sendMessage({
+                                    'subject': subjectController.text,
+                                    'message': messageController.text,
+                                  });
 
                               if (!mounted) return;
                               navigator.pop();
@@ -2645,22 +2791,41 @@ class _DocumentUploaderState extends State<DocumentUploader> {
 
   Future<void> _fetchDocuments() async {
     try {
-      final data = await ApiService.getDocuments();
+      final data = await ApiService.getClientDocuments();
+      final List<Map<String, String>> newDocuments = [];
+
+      if (data is List) {
+        final dataList = data as List;
+        for (final doc in dataList) {
+          newDocuments.add({
+            'name': (doc['title'] ?? '').toString(),
+            'status': (doc['status'] ?? 'pending').toString(),
+            'date': (doc['created_at'] ?? '-').toString(),
+            'file_type': (doc['file_type'] ?? '').toString(),
+            'file_size': (doc['file_size'] ?? '').toString(),
+          });
+        }
+      } else if (data is Map && data['data'] is List) {
+        final dataList = data['data'] as List;
+        for (final doc in dataList) {
+          newDocuments.add({
+            'name': (doc['title'] ?? '').toString(),
+            'status': (doc['status'] ?? 'pending').toString(),
+            'date': (doc['created_at'] ?? '-').toString(),
+            'file_type': (doc['file_type'] ?? '').toString(),
+            'file_size': (doc['file_size'] ?? '').toString(),
+          });
+        }
+      }
+
       setState(() {
-        documents = List<Map<String, String>>.from(
-          data.map(
-            (doc) => {
-              'name': doc['title'] ?? '',
-              'status': doc['status'] ?? 'pending',
-              'date': doc['created_at'] ?? '-',
-              'file_type': doc['file_type'] ?? '',
-              'file_size': doc['file_size']?.toString() ?? '',
-            },
-          ),
-        );
+        documents = newDocuments;
       });
     } catch (e) {
       // Handle error silently or show message
+      setState(() {
+        documents = [];
+      });
     }
   }
 
@@ -3026,13 +3191,23 @@ class AppointmentSchedulerState extends State<AppointmentScheduler> {
 
   Future<void> _fetchAppointments() async {
     try {
-      final data = await ApiService.getAppointments();
+      final data = await ApiService.getClientAppointments();
       setState(() {
-        upcomingAppointments = List<Map<String, dynamic>>.from(data);
+        // Extract the appointments list from the API response
+        if (data['data'] is List) {
+          upcomingAppointments = List<Map<String, dynamic>>.from(
+            data['data'] as List,
+          );
+        } else if (data is List) {
+          upcomingAppointments = List<Map<String, dynamic>>.from(data as List);
+        } else {
+          upcomingAppointments = [];
+        }
         isLoading = false;
       });
     } catch (e) {
       setState(() {
+        upcomingAppointments = [];
         isLoading = false;
       });
     }
