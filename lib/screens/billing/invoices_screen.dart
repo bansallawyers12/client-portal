@@ -208,7 +208,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(invoice.status).withOpacity(0.1),
+                      color: _getStatusColor(invoice.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -251,7 +251,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

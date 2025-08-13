@@ -98,10 +98,10 @@ class MilestoneCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color:
                                 isCompleted
-                                    ? Colors.green.withOpacity(0.1)
+                                    ? Colors.green.withValues(alpha: 0.1)
                                     : isCurrent
-                                    ? milestoneColor.withOpacity(0.1)
-                                    : Colors.grey.withOpacity(0.1),
+                                    ? milestoneColor.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(

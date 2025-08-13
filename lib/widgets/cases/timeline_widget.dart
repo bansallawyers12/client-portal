@@ -102,7 +102,7 @@ class TimelineWidget extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: _getEventTypeColor(
                               event.type,
-                            ).withOpacity(0.1),
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'dart:convert';
 import '../../services/auth_service.dart';
 import '../../config/theme_config.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/error_widget.dart';
+import '../../models/client.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,13 +18,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
-  
+
   String? _errorMessage;
   String? _successMessage;
 
@@ -74,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _successMessage = result['message'];
         });
-        
+
         // Navigate to dashboard after successful login
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.pushReplacementNamed(context, '/dashboard');
@@ -103,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final authenticated = await AuthService.authenticateWithBiometrics();
-      
+
       if (authenticated) {
         // Try to get stored credentials and login
         // For now, we'll just show a message
@@ -134,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final enabled = await AuthService.enableBiometric();
-      
+
       if (enabled) {
         setState(() {
           _biometricEnabled = true;
@@ -148,6 +150,63 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Error enabling biometric: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Test login method for development and testing purposes
+  Future<void> _testLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      // Simulate a test login with mock data
+      await Future.delayed(
+        const Duration(milliseconds: 800),
+      ); // Simulate network delay
+
+      // Create a mock client for testing using the correct constructor
+      final mockClient = Client(
+        id: 1,
+        clientId: 'test_client_001',
+        name: 'Test Client',
+        email: 'test@example.com',
+        phone: '+1234567890',
+        city: 'Test City',
+        address: '123 Test Street',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        state: 'Test State',
+        country: 'Test Country',
+        postCode: '12345',
+        gender: 'Not Specified',
+        age: '25',
+        maritalStatus: 'Single',
+        phoneNumber1: '+1234567890',
+        phoneVerify: true,
+        emailVerify: true,
+        themeMode: 'light',
+      );
+
+      // Simulate successful login by setting success message
+      setState(() {
+        _successMessage = 'Test login successful! Navigating to dashboard...';
+      });
+
+      // Navigate to dashboard after successful test login
+      Future.delayed(const Duration(seconds: 1), () {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Test login failed: ${e.toString()}';
       });
     } finally {
       setState(() {
@@ -180,31 +239,28 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Icon(
-                          Icons.gavel,
-                          size: 40,
-                          color: Colors.white,
-                        ),
+                        child: Icon(Icons.gavel, size: 40, color: Colors.white),
                       ),
                       const SizedBox(height: 24),
                       Text(
                         'Welcome Back',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Sign in to your client portal',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 48),
-                  
+
                   // Login Form
                   Form(
                     key: _formKey,
@@ -232,9 +288,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Password Field
                         TextFormField(
                           controller: _passwordController,
@@ -245,9 +301,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: const Icon(Icons.lock_outlined),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _isPasswordVisible 
-                                  ? Icons.visibility_off 
-                                  : Icons.visibility,
+                                _isPasswordVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -271,9 +327,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Remember Me & Forgot Password
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -293,15 +349,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.pushNamed(context, '/forgot-password');
+                                Navigator.pushNamed(
+                                  context,
+                                  '/forgot-password',
+                                );
                               },
                               child: const Text('Forgot Password?'),
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Login Button
                         ElevatedButton(
                           onPressed: _isLoading ? null : _login,
@@ -314,35 +373,43 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             elevation: 0,
                           ),
-                          child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                          child:
+                              _isLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                  : const Text(
+                                    'Sign In',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Biometric Authentication
                         if (_biometricAvailable) ...[
                           if (_biometricEnabled)
                             OutlinedButton.icon(
-                              onPressed: _isLoading ? null : _authenticateWithBiometrics,
+                              onPressed:
+                                  _isLoading
+                                      ? null
+                                      : _authenticateWithBiometrics,
                               icon: const Icon(Icons.fingerprint),
                               label: const Text('Sign in with Biometrics'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -354,35 +421,99 @@ class _LoginScreenState extends State<LoginScreen> {
                               icon: const Icon(Icons.fingerprint_outlined),
                               label: const Text('Enable Biometric Login'),
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                             ),
-                          
+
                           const SizedBox(height: 20),
                         ],
-                        
+
+                        // Test Login Button (Development Only)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.3),
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '🧪 TEST MODE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[700],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _isLoading ? null : _testLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange[600],
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  icon: const Icon(Icons.science, size: 18),
+                                  label: const Text(
+                                    'Quick Test Login',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         // Divider
                         Row(
                           children: [
-                            Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+                            Expanded(
+                              child: Divider(
+                                color: Theme.of(context).dividerColor,
+                              ),
+                            ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 'OR',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.5),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.color
+                                      ?.withValues(alpha: 0.5),
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+                            Expanded(
+                              child: Divider(
+                                color: Theme.of(context).dividerColor,
+                              ),
+                            ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Register Link
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -402,21 +533,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Error/Success Messages
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 20),
                     CustomErrorWidget(message: _errorMessage!),
                   ],
-                  
+
                   if (_successMessage != null) ...[
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        border: Border.all(
+                          color: Colors.green.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         children: [

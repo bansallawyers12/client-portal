@@ -2805,16 +2805,18 @@ class _DocumentUploaderState extends State<DocumentUploader> {
             'file_size': (doc['file_size'] ?? '').toString(),
           });
         }
-      } else if (data is Map && data['data'] is List) {
-        final dataList = data['data'] as List;
-        for (final doc in dataList) {
-          newDocuments.add({
-            'name': (doc['title'] ?? '').toString(),
-            'status': (doc['status'] ?? 'pending').toString(),
-            'date': (doc['created_at'] ?? '-').toString(),
-            'file_type': (doc['file_type'] ?? '').toString(),
-            'file_size': (doc['file_size'] ?? '').toString(),
-          });
+      } else if (data is Map && data['data'] != null) {
+        final dataList = data['data'] as List?;
+        if (dataList != null) {
+          for (final doc in dataList) {
+            newDocuments.add({
+              'name': (doc['title'] ?? '').toString(),
+              'status': (doc['status'] ?? 'pending').toString(),
+              'date': (doc['created_at'] ?? '-').toString(),
+              'file_type': (doc['file_type'] ?? '').toString(),
+              'file_size': (doc['file_size'] ?? '').toString(),
+            });
+          }
         }
       }
 

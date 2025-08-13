@@ -4,7 +4,6 @@ import '../../models/appointment.dart';
 import '../../models/service.dart';
 import '../../services/api_service.dart';
 import '../../widgets/common/loading_widget.dart';
-import '../../widgets/common/error_widget.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   const AppointmentsScreen({super.key});
@@ -67,7 +66,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
       _loadMockServices();
     } catch (e) {
       // Handle error silently for now
-      print('Failed to load services: $e');
+      // TODO: Log error properly in production
     }
   }
 
@@ -147,9 +146,24 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     if (_errorMessage != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Appointments')),
-        body: CustomErrorWidget(
-          message: _errorMessage!,
-          onRetry: _loadAppointments,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadAppointments,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -339,7 +353,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                     decoration: BoxDecoration(
                       color: _getStatusColor(
                         appointment.status,
-                      ).withOpacity(0.1),
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

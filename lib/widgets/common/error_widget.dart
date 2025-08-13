@@ -21,12 +21,12 @@ class CustomErrorWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.red.withOpacity(0.1),
+        color: backgroundColor ?? Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: backgroundColor != null 
-            ? (backgroundColor!.withOpacity(0.3))
-            : Colors.red.withOpacity(0.3),
+            ? (backgroundColor!.withValues(alpha: 0.3))
+            : Colors.red.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -95,7 +95,7 @@ class ErrorScreen extends StatelessWidget {
                 Icon(
                   icon ?? Icons.error_outline,
                   size: 80,
-                  color: Colors.red.withOpacity(0.5),
+                  color: Colors.red.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -110,7 +110,7 @@ class ErrorScreen extends StatelessWidget {
                 Text(
                   message,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
