@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/task.dart';
 import '../../models/appointment.dart';
+import '../../screens/tasks/tasks_screen.dart';
+import '../../screens/appointments/appointments_screen.dart';
 
 class UpcomingDeadlinesCard extends StatelessWidget {
   final List<Task> tasks;
@@ -61,11 +63,29 @@ class UpcomingDeadlinesCard extends StatelessWidget {
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
               ),
-              TextButton(
-                onPressed: () {
-                  // TODO: Navigate to full deadlines view
-                },
-                child: const Text('View All'),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const TasksScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Tasks'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AppointmentsScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Appointments'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -159,7 +179,7 @@ class UpcomingDeadlinesCard extends StatelessWidget {
                   Icon(
                     Icons.check_circle,
                     size: 48,
-                    color: Colors.green.withValues(alpha: 0.7),
+                    color: Colors.green.withOpacity(0.7),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -175,7 +195,7 @@ class UpcomingDeadlinesCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
                         context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                      ).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -198,9 +218,9 @@ class UpcomingDeadlinesCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -217,7 +237,7 @@ class UpcomingDeadlinesCard extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: color.withValues(alpha: 0.8)),
+            ).textTheme.bodySmall?.copyWith(color: color.withOpacity(0.8)),
             textAlign: TextAlign.center,
           ),
         ],
@@ -234,9 +254,9 @@ class UpcomingDeadlinesCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -310,9 +330,9 @@ class UpcomingDeadlinesCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         children: [

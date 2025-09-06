@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/document.dart';
+import '../../screens/documents/documents_screen.dart';
 
 class DocumentStatusCard extends StatelessWidget {
   final List<Document> documents;
@@ -35,7 +36,11 @@ class DocumentStatusCard extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // TODO: Navigate to documents list
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const DocumentsScreen(),
+                    ),
+                  );
                 },
                 child: const Text('View All'),
               ),

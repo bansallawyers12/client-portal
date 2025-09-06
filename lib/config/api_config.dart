@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base API configuration
-  static const String baseUrl = 'https://your-crm-domain.com/api';
+  static const String baseUrl = 'http://localhost:8000/api';
   static const String clientPortalEndpoint = '/client-portal';
 
   // Authentication endpoints

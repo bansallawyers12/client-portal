@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
@@ -315,12 +316,53 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> sendMessage(Map<String, dynamic> data) async {
-    return await _makeRequest(
-      ApiConfig.clientMessagesEndpoint,
-      _buildHeaders(),
-      data,
-      'POST',
-    );
+    // Check if there are attachments
+    final attachments = data['attachments'] as List<String>?;
+    
+    if (attachments != null && attachments.isNotEmpty) {
+      // Send with file attachments using multipart
+      final headers = _buildHeaders();
+      headers.remove('Content-Type'); // Let http package set multipart content type
+      
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.getEndpoint(ApiConfig.clientMessagesEndpoint)),
+      );
+      
+      request.headers.addAll(headers);
+      request.fields['subject'] = data['subject'] ?? '';
+      request.fields['message'] = data['message'] ?? '';
+      
+      // Add file attachments
+      for (int i = 0; i < attachments.length; i++) {
+        final file = File(attachments[i]);
+        if (await file.exists()) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'attachments[]',
+              attachments[i],
+            ),
+          );
+        }
+      }
+      
+      try {
+        final streamedResponse = await request.send().timeout(_timeout);
+        final response = await http.Response.fromStream(streamedResponse);
+        
+        return _handleResponse(response);
+      } catch (e) {
+        throw Exception('Message send failed: ${e.toString()}');
+      }
+    } else {
+      // Send without attachments using regular JSON
+      return await _makeRequest(
+        ApiConfig.clientMessagesEndpoint,
+        _buildHeaders(),
+        data,
+        'POST',
+      );
+    }
   }
 
   static Future<Map<String, dynamic>> getClientTasks() async {

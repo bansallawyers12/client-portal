@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/case.dart';
+import '../../screens/cases/cases_list_screen.dart';
 
 class CaseSummaryCard extends StatelessWidget {
   final List<Case> cases;
@@ -33,7 +34,11 @@ class CaseSummaryCard extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // TODO: Navigate to cases list
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const CasesListScreen(),
+                    ),
+                  );
                 },
                 child: const Text('View All'),
               ),
