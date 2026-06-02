@@ -24,13 +24,10 @@ class _BlogListScreenState extends State<BlogListScreen> {
   void initState() {
     super.initState();
     _fetchBlogs();
-
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
-        if (!_isLoading && _hasNextPage) {
-          _fetchBlogs();
-        }
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        if (!_isLoading && _hasNextPage) _fetchBlogs();
       }
     });
   }
@@ -81,135 +78,302 @@ class _BlogListScreenState extends State<BlogListScreen> {
     await _fetchBlogs();
   }
 
-  Widget _buildBlogCard(Blog blog) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: GestureDetector(
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            '/blogs/detail',
-            arguments: {'blogId': blog.id},
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+  void _openDetail(int blogId) =>
+      Navigator.pushNamed(context, '/blogs/detail', arguments: {'blogId': blogId});
+
+  // ── Featured / first card — tall with image-overlay title ─────────────
+  Widget _buildFeaturedCard(Blog blog) {
+    return GestureDetector(
+      onTap: () => _openDetail(blog.id),
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: Stack(
-                children: [
-                  Image.network(
-                    blog.image,
-                    height: 160,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 160,
-                        width: double.infinity,
-                        color: Colors.grey[300],
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 40,
-                          color: Colors.grey[600],
-                        ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 160,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: Center(child: AppLoader()),
-                      );
-                    },
+            // Background image
+            Image.network(
+              blog.image,
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, st) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1E1464), Color(0xFF3949AB)],
                   ),
-                  if (blog.featured)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade100,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star, size: 12, color: Colors.orange),
-                            SizedBox(width: 4),
-                            Text(
-                              "Featured",
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+                ),
+                child: const Center(
+                  child: Icon(Icons.article_outlined, size: 56, color: Colors.white24),
+                ),
+              ),
+              loadingBuilder: (ctx, child, progress) => progress == null
+                  ? child
+                  : Container(color: const Color(0xFFE8EAF0)),
+            ),
+
+            // Gradient overlay — bottom heavy for text legibility
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.0, 0.40, 1.0],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.30),
+                    Colors.black.withValues(alpha: 0.88),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    blog.date,
-                    style:
-                    TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    blog.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+
+            // Content overlaid at the bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (blog.featured)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: ThemeConfig.goldenYellow,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'FEATURED',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Text(
+                      blog.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    blog.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                    TextStyle(fontSize: 13, color: Colors.grey.shade700),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    "By ${blog.author}",
-                    style:
-                    TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded,
+                            size: 11, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        Text(
+                          blog.date,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.person_rounded,
+                            size: 11, color: Colors.white70),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            blog.author.isNotEmpty ? blog.author : 'Bansal Immigration',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Read',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(width: 3),
+                              Icon(Icons.arrow_forward_rounded,
+                                  size: 10, color: Colors.white),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Standard card — clean horizontal layout ───────────────────────────
+  Widget _buildStandardCard(Blog blog) {
+    return GestureDetector(
+      onTap: () => _openDetail(blog.id),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            SizedBox(
+              width: 106,
+              height: 106,
+              child: Image.network(
+                blog.image,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, st) => Container(
+                  color: const Color(0xFFF1F5F9),
+                  child: Icon(Icons.article_outlined, size: 28, color: Colors.grey.shade300),
+                ),
+                loadingBuilder: (ctx, child, progress) => progress == null
+                    ? child
+                    : Container(color: const Color(0xFFF1F5F9)),
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      blog.date,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      blog.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                        height: 1.35,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            blog.author.isNotEmpty ? blog.author : 'Bansal Immigration',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade400,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 10,
+                          color: Color(0xFFF9B000),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Empty state ────────────────────────────────────────────────────────
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(Icons.article_outlined, size: 34, color: Colors.grey.shade400),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No articles yet',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Pull down to refresh',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          ),
+        ],
       ),
     );
   }
@@ -222,96 +386,114 @@ class _BlogListScreenState extends State<BlogListScreen> {
         MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xffF5F7FB),
+      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: const Text('Blogs'),
         backgroundColor: ThemeConfig.goldenYellow,
         foregroundColor: Colors.white,
+        elevation: 0,
+        titleSpacing: 4,
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Blogs & News',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: -0.2,
+              ),
+            ),
+            Text(
+              'Stay informed & updated',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white70,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
-      // ── KEY CHANGE ──────────────────────────────────────────────────────────
-      // SafeArea wraps the full body. The ListView/GridView already scroll
-      // themselves via _scrollController, so we do NOT wrap them in an extra
-      // SingleChildScrollView — that would break infinite scroll. Instead we
-      // move Center + ConstrainedBox INSIDE the scrollable builders so the
-      // content is width-capped on large screens while the list itself owns
-      // the full viewport and scrolls natively on web/desktop.
-      // ────────────────────────────────────────────────────────────────────────
       body: SafeArea(
         child: _blogs.isEmpty && _isLoading
-            ? Center(
-          child: SizedBox(
-            height: viewportHeight,
-            child: const Center(child: AppLoader()),
-          ),
-        )
+            ? SizedBox(height: viewportHeight, child: const Center(child: AppLoader()))
             : RefreshIndicator(
-          onRefresh: _onRefresh,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final cols = AppResponsive.gridColumns(
-                context,
-                mobile: 1,
-                tablet: 2,
-                desktop: 3,
-              );
+                onRefresh: _onRefresh,
+                color: ThemeConfig.goldenYellow,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cols = AppResponsive.gridColumns(
+                      context,
+                      mobile: 1,
+                      tablet: 2,
+                      desktop: 3,
+                    );
 
-              if (cols == 1) {
-                return ListView.builder(
-                  controller: _scrollController,
-                  itemCount: _blogs.length + (_isLoading ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index < _blogs.length) {
-                      return Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: AppResponsive.maxContentWidth,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
+                    // ── Mobile single-column ─────────────────────────────
+                    if (cols == 1) {
+                      if (_blogs.isEmpty && !_isLoading) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(height: viewportHeight, child: _buildEmptyState()),
+                        );
+                      }
+
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                        itemCount: _blogs.length + (_isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          // Loading spinner at end
+                          if (index >= _blogs.length) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: AppLoader()),
+                            );
+                          }
+
+                          final blog = _blogs[index];
+
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: AppResponsive.maxContentWidth),
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: index == 0 ? 14 : 10),
+                                child: index == 0
+                                    ? _buildFeaturedCard(blog)
+                                    : _buildStandardCard(blog),
+                              ),
                             ),
-                            child: _buildBlogCard(_blogs[index]),
-                          ),
-                        ),
+                          );
+                        },
                       );
                     }
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: AppLoader()),
+
+                    // ── Tablet / desktop grid ────────────────────────────
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: AppResponsive.maxContentWidth),
+                        child: GridView.builder(
+                          controller: _scrollController,
+                          padding: AppResponsive.pagePadding(context),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: cols,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.85,
+                          ),
+                          itemCount: _blogs.length + (_isLoading ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index < _blogs.length) return _buildFeaturedCard(_blogs[index]);
+                            return const Center(child: AppLoader());
+                          },
+                        ),
+                      ),
                     );
                   },
-                );
-              }
-
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppResponsive.maxContentWidth,
-                  ),
-                  child: GridView.builder(
-                    controller: _scrollController,
-                    padding: AppResponsive.pagePadding(context),
-                    gridDelegate:
-                    SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: cols,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                      childAspectRatio: 1.1,
-                    ),
-                    itemCount: _blogs.length + (_isLoading ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index < _blogs.length) {
-                        return _buildBlogCard(_blogs[index]);
-                      }
-                      return const Center(child: AppLoader());
-                    },
-                  ),
                 ),
-              );
-            },
-          ),
-        ),
+              ),
       ),
     );
   }

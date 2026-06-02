@@ -315,183 +315,430 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   }
 
   Widget _buildRecentUpdatesSection() {
-    final double blogCardWidth = AppResponsive.value<double>(
+    final double cardWidth = AppResponsive.value<double>(
       context,
-      mobile: 260,
-      tablet: 300,
-      desktop: 340,
+      mobile: 240,
+      tablet: 280,
+      desktop: 320,
     );
-    final double blogSectionHeight = AppResponsive.value<double>(
+    final double sectionHeight = AppResponsive.value<double>(
       context,
-      mobile: 140,
-      tablet: 165,
-      desktop: 220,
+      mobile: 163,
+      tablet: 186,
+      desktop: 218,
     );
-
     final isDesktop = AppResponsive.isDesktop(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Section header ──────────────────────────────────────────
         Padding(
-          padding: AppResponsive.horizontalPadding(
-            context,
-          ).copyWith(top: isDesktop ? 24 : 8),
+          padding: AppResponsive.horizontalPadding(context)
+              .copyWith(top: isDesktop ? 24 : 10),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Recent updates",
+                    "Recent Updates",
                     style: TextStyle(
                       fontSize: isDesktop ? 20 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1E1464),
+                      letterSpacing: -0.4,
                     ),
                   ),
-                  if (isDesktop) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 28,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9B000),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Latest immigration news",
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9B000),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 6,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9B000).withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const Spacer(),
-              TextButton(
-                onPressed:
-                    () => {
-                      if (AuthService.isAuthenticated)
-                        Navigator.pushNamed(context, '/blogs')
-                      else
-                        {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            barrierColor: Colors.black.withValues(alpha:0.4),
-                            builder: (context) {
-                              return BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                                child: LoginSignupDialog(
-                                  parentContext: context,
-                                  onCancel: () {},
-                                ),
-                              );
-                            },
-                          ),
-                        },
-                    },
-                child: const Text("View all"),
+              GestureDetector(
+                onTap: () {
+                  if (AuthService.isAuthenticated) {
+                    Navigator.pushNamed(context, '/blogs');
+                  } else {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      barrierColor: Colors.black.withValues(alpha: 0.4),
+                      builder: (ctx) => BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                        child: LoginSignupDialog(
+                          parentContext: context,
+                          onCancel: () {},
+                        ),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9B000).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFF9B000).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "View all",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFF9B000),
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 13,
+                        color: Color(0xFFF9B000),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: blogSectionHeight,
-          child:
-              _isLoadingBlogs
-                  ? const Center(child: AppLoader())
-                  : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _blogs.length,
-                    padding: AppResponsive.horizontalPadding(context),
-                    itemBuilder: (context, index) {
-                      final blog = _blogs[index];
+        const SizedBox(height: 14),
 
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () {
-                          if (AuthService.isAuthenticated) {
-                            Navigator.pushNamed(
-                              context,
-                              '/blogs/detail',
-                              arguments: {'blogId': blog.id},
-                            );
-                          } else {
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              barrierColor: Colors.black.withValues(alpha:0.4),
-                              builder: (context) {
-                                return BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 6,
-                                    sigmaY: 6,
-                                  ),
-                                  child: LoginSignupDialog(
-                                    parentContext: context,
-                                    onCancel: () {},
-                                  ),
-                                );
-                              },
-                            );
-                          }
-                        },
-                        child: Container(
-                          width: blogCardWidth,
-                          margin: EdgeInsets.only(
-                            right: index == _blogs.length - 1 ? 0 : 16,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            image: DecorationImage(
-                              image: NetworkImage(blog.image),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha:0.2),
-                                    Colors.black.withValues(alpha:0.7),
-                                  ],
-                                ),
-                              ),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    blog.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    blog.date,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+        // ── Card list ───────────────────────────────────────────────
+        SizedBox(
+          height: sectionHeight,
+          child: _isLoadingBlogs
+              ? ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 3,
+                  padding: AppResponsive.horizontalPadding(context),
+                  itemBuilder: (_, i) => _buildSkeletonCard(cardWidth, i),
+                )
+              : _blogs.isEmpty
+                  ? Center(
+                      child: Text(
+                        'No updates available',
+                        style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                      ),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _blogs.length,
+                      padding: AppResponsive.horizontalPadding(context),
+                      itemBuilder: (context, index) =>
+                          _buildBlogCard(_blogs[index], index, cardWidth),
+                    ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBlogCard(Blog blog, int index, double cardWidth) {
+    const double stripHeight = 64.0;
+
+    void handleTap() {
+      if (AuthService.isAuthenticated) {
+        Navigator.pushNamed(context, '/blogs/detail', arguments: {'blogId': blog.id});
+      } else {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          barrierColor: Colors.black.withValues(alpha: 0.4),
+          builder: (ctx) => BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: LoginSignupDialog(parentContext: context, onCancel: () {}),
+          ),
+        );
+      }
+    }
+
+    return GestureDetector(
+      onTap: handleTap,
+      child: Container(
+        width: cardWidth,
+        margin: EdgeInsets.only(right: index == _blogs.length - 1 ? 0 : 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E1464).withValues(alpha: 0.14),
+              blurRadius: 18,
+              offset: const Offset(0, 5),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Background image
+              blog.image.isNotEmpty
+                  ? Image.network(
+                      blog.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF1E1464), Color(0xFF2D3B8F)],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.article_outlined, size: 32, color: Colors.white24),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF1E1464), Color(0xFF2D3B8F)],
+                        ),
+                      ),
+                    ),
+
+              // Top vignette so badge stays readable over any image
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.38),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Category badge + arrow (top row)
+              Positioned(
+                top: 10,
+                left: 10,
+                right: 10,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: blog.featured
+                            ? const Color(0xFFF9B000)
+                            : Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: blog.featured
+                              ? Colors.transparent
+                              : Colors.white.withValues(alpha: 0.4),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        blog.featured ? 'FEATURED' : 'NEWS',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_outward_rounded,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Bottom: thin golden line + navy content strip
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(height: 2, color: const Color(0xFFF9B000)),
+                    Container(
+                      height: stripHeight,
+                      color: const Color(0xFF1E1464).withValues(alpha: 0.93),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            blog.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              letterSpacing: 0.05,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.person_rounded, size: 9, color: Colors.white54),
+                              const SizedBox(width: 3),
+                              Expanded(
+                                child: Text(
+                                  blog.author.isNotEmpty ? blog.author : 'Bansal Immigration',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFFBBBBBB),
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 3,
+                                height: 3,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFF9B000),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                blog.date,
+                                style: const TextStyle(
+                                  color: Color(0xFFAAAAAA),
+                                  fontSize: 9.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkeletonCard(double cardWidth, int index) {
+    return Container(
+      width: cardWidth,
+      margin: EdgeInsets.only(right: index == 2 ? 0 : 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          children: [
+            Expanded(child: Container(color: Colors.grey.shade200)),
+            Container(height: 2, color: Colors.grey.shade300),
+            Container(
+              height: 64,
+              color: Colors.grey.shade300,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    height: 10,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  Container(
+                    height: 9,
+                    width: cardWidth * 0.55,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
