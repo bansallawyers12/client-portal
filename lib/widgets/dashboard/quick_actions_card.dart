@@ -60,9 +60,9 @@ class QuickActionsCard extends StatelessWidget {
 
         // Web: compact horizontal tiles. Mobile: original vertical/horizontal mix.
         final tilePadding = isWeb ? 12.0 : 16.0;
-        final iconSize = isWeb ? 20.0 : 18.0;
+        final iconSize = isWeb ? 16.0 : 14.0;
         final fontSize = isWeb ? 12.5 : 13.5;
-        final iconPad = isWeb ? 8.0 : 5.0;
+        final iconPad = isWeb ? 6.0 : 4.0;
 
         return Container(
           padding: const EdgeInsets.all(18),
@@ -164,10 +164,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'Student Fund Calculator',
                     gradient: const [Color(0xFF3949AB), Color(0xFF9FA8DA)],
                     onTap: onStudentFundCalculator ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
 
@@ -177,10 +177,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'Occupation Search',
                     gradient: const [Color(0xFF00838F), Color(0xFF80DEEA)],
                     onTap: onOccupationSearch ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
 
@@ -190,10 +190,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'Post Code Checker',
                     gradient: const [Color(0xFF7B1FA2), Color(0xFFCE93D8)],
                     onTap: onPostCodeChecker ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
 
@@ -203,10 +203,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'Important Links',
                     gradient: const [Color(0xFF1565C0), Color(0xFF90CAF9)],
                     onTap: onImportantLinks ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
 
@@ -216,10 +216,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'English Requirement',
                     gradient: const [Color(0xFFE64A19), Color(0xFFFFAB91)],
                     onTap: onEnglishRequirement ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
 
@@ -229,10 +229,10 @@ class QuickActionsCard extends StatelessWidget {
                     label: 'VAC Search',
                     gradient: const [Color(0xFF00695C), Color(0xFF80CBC4)],
                     onTap: onVACSearch ?? () {},
-                    iconSize: iconSize - 2,
+                    iconSize: iconSize,
                     fontSize: fontSize - 0.5,
                     padding: tilePadding - 2,
-                    iconPad: iconPad - 2,
+                    iconPad: iconPad,
                     isWeb: isWeb,
                   ),
                 ],
@@ -342,7 +342,7 @@ class QuickActionsCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Colors.white54),
+            //const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Colors.white54),
           ],
         ),
       ),

@@ -590,7 +590,7 @@ class MyFilesQuickActionsCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Colors.white54),
+            //const Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Colors.white54),
           ],
         ),
       ),
