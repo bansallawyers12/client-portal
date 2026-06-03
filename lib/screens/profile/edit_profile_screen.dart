@@ -44,6 +44,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Other',
   ];
 
+  // ─── Logic (unchanged) ───────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +57,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
       _loadError = null;
     });
-
     try {
       final response = await ApiService.getClientProfile();
       if (response['success'] == true && response['data'] != null) {
@@ -73,8 +74,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         final dobValue = data['dob'] ?? data['date_of_birth'];
         if (dobValue is String && dobValue.isNotEmpty) {
-          final parsed = DateTime.tryParse(dobValue);
-          _selectedDateOfBirth = parsed;
+          _selectedDateOfBirth = DateTime.tryParse(dobValue);
         }
 
         final genderValue = data['gender']?.toString();
@@ -88,9 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _selectedMaritalStatus = maritalStatusValue;
         }
 
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       } else {
         setState(() {
           _isLoading = false;
@@ -124,25 +122,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final now = DateTime.now();
     final initialDate =
         _selectedDateOfBirth ?? DateTime(now.year - 18, now.month, now.day);
-    final pickedDate = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(1900),
       lastDate: now,
       helpText: 'Select Date of Birth',
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: ThemeConfig.goldenYellow,
+            onPrimary: Colors.white,
+            onSurface: ThemeConfig.textPrimaryLight,
+          ),
+        ),
+        child: child!,
+      ),
     );
-
-    if (pickedDate != null) {
-      setState(() {
-        _selectedDateOfBirth = pickedDate;
-      });
-    }
+    if (picked != null) setState(() => _selectedDateOfBirth = picked);
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isSubmitting = true;
@@ -190,38 +191,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      setState(() {
-        _submitError = e.toString();
-      });
+      setState(() => _submitError = e.toString());
     } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
+  // ─── Build ───────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // Usable viewport height (minus AppBar and safe areas) for centering
-    // loader/error states inside the scroll view.
     final viewportHeight = MediaQuery.of(context).size.height -
         kToolbarHeight -
         MediaQuery.of(context).padding.top -
         MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
+      backgroundColor: ThemeConfig.backgroundLight,
       appBar: AppBar(
-        title: const Text('Edit Client Information'),
         backgroundColor: ThemeConfig.goldenYellow,
         foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            letterSpacing: 0.4,
+          ),
+        ),
       ),
-      // ── KEY CHANGE ──────────────────────────────────────────────────────────
-      // SafeArea + SingleChildScrollView are now the outermost body widgets so
-      // the entire page scrolls on web/desktop. Center + ConstrainedBox inside
-      // keep content width-capped and centred on large screens.
-      // ────────────────────────────────────────────────────────────────────────
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -231,103 +233,212 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               child: _isLoading
                   ? SizedBox(
-                height: viewportHeight,
-                child: const Center(child: AppLoader()),
-              )
+                      height: viewportHeight,
+                      child: const Center(child: AppLoader()),
+                    )
                   : _loadError != null
-                  ? SizedBox(
-                height: viewportHeight,
-                child: _ErrorState(
-                  message: _loadError!,
-                  onRetry: _fetchProfile,
-                ),
-              )
-                  : GestureDetector(
-                onTap: () => FocusScope.of(context).unfocus(),
-                child: Padding(
-                  padding: AppResponsive.pagePadding(context),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _SectionTitle(text: 'Personal Information'),
-                        const SizedBox(height: 12),
-                        _buildFirstNameField(),
-                        const SizedBox(height: 16),
-                        _buildLastNameField(),
-                        const SizedBox(height: 16),
-                        _buildEmailField(),
-                        const SizedBox(height: 16),
-                        _buildDateOfBirthField(),
-                        const SizedBox(height: 16),
-                        _buildGenderField(),
-                        const SizedBox(height: 16),
-                        _buildMaritalStatusField(),
-                        const SizedBox(height: 28),
-                        _SectionTitle(text: 'Contact Information'),
-                        const SizedBox(height: 12),
-                        _buildPhoneField(),
-                        const SizedBox(height: 16),
-                        _buildAddressField(),
-                        const SizedBox(height: 16),
-                        _buildCityField(),
-                        const SizedBox(height: 16),
-                        _buildStateField(),
-                        const SizedBox(height: 16),
-                        _buildPostCodeField(),
-                        const SizedBox(height: 16),
-                        _buildCountryField(),
-                        if (_submitError != null) ...[
-                          const SizedBox(height: 20),
-                          Text(
-                            _submitError!,
-                            style:
-                            const TextStyle(color: Colors.red),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed:
-                            _isSubmitting ? null : _submit,
-                            icon: _isSubmitting
-                                ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: AppLoader(size: 20,),
-                            )
-                                : const Icon(Icons.save),
-                            label: Text(
-                              _isSubmitting
-                                  ? 'Saving...'
-                                  : 'Update Profile',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
-                              backgroundColor:
-                              ThemeConfig.goldenYellow,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(12),
+                      ? SizedBox(
+                          height: viewportHeight,
+                          child: _buildErrorState(),
+                        )
+                      : GestureDetector(
+                          onTap: () => FocusScope.of(context).unfocus(),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // ── Personal Information ─────────────────
+                                  _SectionLabel(
+                                    title: 'Personal Information',
+                                    icon: Icons.person_outline_rounded,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildFormCard(
+                                    children: [
+                                      _buildField(
+                                        controller: _firstNameController,
+                                        label: 'First Name *',
+                                        icon: Icons.person_outline,
+                                        caps: TextCapitalization.words,
+                                        validator: (v) {
+                                          final t = v?.trim() ?? '';
+                                          if (t.isEmpty) {
+                                            return 'First name is required';
+                                          }
+                                          if (t.length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _lastNameController,
+                                        label: 'Last Name',
+                                        icon: Icons.person_outline,
+                                        caps: TextCapitalization.words,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _emailController,
+                                        label: 'Email',
+                                        icon: Icons.email_outlined,
+                                        keyboard: TextInputType.emailAddress,
+                                        validator: (v) {
+                                          final t = v?.trim() ?? '';
+                                          if (t.isNotEmpty &&
+                                              !RegExp(
+                                                r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}',
+                                              ).hasMatch(t)) {
+                                            return 'Enter a valid email';
+                                          }
+                                          if (t.length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildDateField(),
+                                      _rowDivider(),
+                                      _buildDropdown(
+                                        label: 'Gender',
+                                        icon: Icons.wc_outlined,
+                                        value: _selectedGender,
+                                        items: _genders,
+                                        onChanged: (v) => setState(
+                                          () => _selectedGender = v,
+                                        ),
+                                      ),
+                                      _rowDivider(),
+                                      _buildDropdown(
+                                        label: 'Marital Status',
+                                        icon: Icons.favorite_outline,
+                                        value: _selectedMaritalStatus,
+                                        items: _maritalStatuses,
+                                        onChanged: (v) => setState(
+                                          () => _selectedMaritalStatus = v,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // ── Contact Information ──────────────────
+                                  _SectionLabel(
+                                    title: 'Contact Information',
+                                    icon: Icons.contact_phone_outlined,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildFormCard(
+                                    children: [
+                                      _buildField(
+                                        controller: _phoneController,
+                                        label: 'Phone',
+                                        icon: Icons.phone_outlined,
+                                        keyboard: TextInputType.phone,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _addressController,
+                                        label: 'Address',
+                                        icon: Icons.home_outlined,
+                                        maxLines: 2,
+                                        alignHint: true,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 500) {
+                                            return 'Max 500 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _cityController,
+                                        label: 'City',
+                                        icon: Icons.location_city_outlined,
+                                        caps: TextCapitalization.words,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _stateController,
+                                        label: 'State',
+                                        icon: Icons.map_outlined,
+                                        caps: TextCapitalization.words,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _postCodeController,
+                                        label: 'Post Code / ZIP',
+                                        icon: Icons.markunread_mailbox_outlined,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 20) {
+                                            return 'Max 20 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                      _rowDivider(),
+                                      _buildField(
+                                        controller: _countryController,
+                                        label: 'Country',
+                                        icon: Icons.flag_outlined,
+                                        caps: TextCapitalization.words,
+                                        validator: (v) {
+                                          if ((v?.trim() ?? '').length > 255) {
+                                            return 'Max 255 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ],
+                                  ),
+
+                                  // ── Error banner ─────────────────────────
+                                  if (_submitError != null) ...[
+                                    const SizedBox(height: 16),
+                                    _buildErrorBanner(_submitError!),
+                                  ],
+
+                                  const SizedBox(height: 28),
+
+                                  // ── Submit button ────────────────────────
+                                  _buildSubmitButton(),
+
+                                  const SizedBox(height: 20),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ),
           ),
         ),
@@ -335,295 +446,428 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildFirstNameField() {
-    return TextFormField(
-      controller: _firstNameController,
-      decoration: const InputDecoration(
-        labelText: 'First Name *',
-        border: OutlineInputBorder(),
+  // ─── Form card (same card pattern as profile contact card) ───────────────────
+
+  Widget _buildFormCard({required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.isEmpty) {
-          return 'First name is required';
-        }
-        if (trimmed.length > 255) {
-          return 'First name must be less than 255 characters';
-        }
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
     );
   }
 
-  Widget _buildLastNameField() {
+  Widget _rowDivider() => const Divider(
+        height: 1,
+        indent: 56,
+        color: ThemeConfig.borderLight,
+      );
+
+  // ─── Field builder ────────────────────────────────────────────────────────────
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    FormFieldValidator<String>? validator,
+    TextInputType keyboard = TextInputType.text,
+    TextCapitalization caps = TextCapitalization.none,
+    int maxLines = 1,
+    bool alignHint = false,
+  }) {
     return TextFormField(
-      controller: _lastNameController,
-      decoration: const InputDecoration(
-        labelText: 'Last Name',
-        border: OutlineInputBorder(),
+      controller: controller,
+      keyboardType: keyboard,
+      textCapitalization: caps,
+      maxLines: maxLines,
+      validator: validator,
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: ThemeConfig.textPrimaryLight,
       ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 255) {
-          return 'Last name must be less than 255 characters';
-        }
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
+      decoration: InputDecoration(
+        labelText: label,
+        alignLabelWithHint: alignHint,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Icon(icon, size: 20, color: ThemeConfig.goldenYellow),
+        ),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        focusedErrorBorder: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 15,
+        ),
+        labelStyle: const TextStyle(
+          color: ThemeConfig.textSecondaryLight,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        floatingLabelStyle: const TextStyle(
+          color: ThemeConfig.goldenYellow,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 
-  Widget _buildEmailField() {
-    return TextFormField(
-      controller: _emailController,
-      decoration: const InputDecoration(
-        labelText: 'Email',
-        border: OutlineInputBorder(),
+  // ─── Dropdown builder ─────────────────────────────────────────────────────────
+
+  Widget _buildDropdown({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Icon(icon, size: 20, color: ThemeConfig.goldenYellow),
+        ),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 15,
+        ),
+        labelStyle: const TextStyle(
+          color: ThemeConfig.textSecondaryLight,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        floatingLabelStyle: const TextStyle(
+          color: ThemeConfig.goldenYellow,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      keyboardType: TextInputType.emailAddress,
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.isNotEmpty &&
-            !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w]{2,4}').hasMatch(trimmed)) {
-          return 'Enter a valid email address';
-        }
-        if (trimmed.length > 255) {
-          return 'Email must be less than 255 characters';
-        }
-        return null;
-      },
+      style: const TextStyle(
+        fontSize: 14.5,
+        fontWeight: FontWeight.w600,
+        color: ThemeConfig.textPrimaryLight,
+      ),
+      items: items
+          .map(
+            (item) =>
+                DropdownMenuItem<String>(value: item, child: Text(item)),
+          )
+          .toList(),
+      onChanged: onChanged,
     );
   }
 
-  Widget _buildDateOfBirthField() {
-    final formattedDate = _selectedDateOfBirth != null
-        ? DateFormat('dd/MM/yyyy').format(_selectedDateOfBirth!)
-        : 'Select Date';
+  // ─── Date field ───────────────────────────────────────────────────────────────
+
+  Widget _buildDateField() {
+    final formatted = _selectedDateOfBirth != null
+        ? DateFormat('dd / MM / yyyy').format(_selectedDateOfBirth!)
+        : 'Select date';
+
     return InkWell(
       onTap: _pickDateOfBirth,
       child: InputDecorator(
         decoration: const InputDecoration(
           labelText: 'Date of Birth',
-          border: OutlineInputBorder(),
-          suffixIcon: Icon(Icons.calendar_today),
+          prefixIcon: Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Icon(
+              Icons.cake_outlined,
+              size: 20,
+              color: ThemeConfig.goldenYellow,
+            ),
+          ),
+          suffixIcon: Icon(
+            Icons.calendar_month_outlined,
+            size: 18,
+            color: ThemeConfig.goldenYellow,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          labelStyle: TextStyle(
+            color: ThemeConfig.textSecondaryLight,
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
+          floatingLabelStyle: TextStyle(
+            color: ThemeConfig.goldenYellow,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         child: Text(
-          formattedDate,
+          formatted,
           style: TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w600,
             color: _selectedDateOfBirth != null
-                ? Colors.black87
-                : Colors.grey[600],
-            fontSize: 16,
+                ? ThemeConfig.textPrimaryLight
+                : ThemeConfig.textSecondaryLight,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGenderField() {
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedGender,
-      decoration: const InputDecoration(
-        labelText: 'Gender',
-        border: OutlineInputBorder(),
-      ),
-      items: _genders
-          .map(
-            (gender) => DropdownMenuItem<String>(
-          value: gender,
-          child: Text(gender),
+  // ─── Error banner ─────────────────────────────────────────────────────────────
+
+  Widget _buildErrorBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      decoration: BoxDecoration(
+        color: ThemeConfig.errorColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: ThemeConfig.errorColor.withValues(alpha: 0.25),
         ),
-      )
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedGender = value;
-        });
-      },
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.error_outline_rounded,
+            color: ThemeConfig.errorColor,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: ThemeConfig.errorColor,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildMaritalStatusField() {
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedMaritalStatus,
-      decoration: const InputDecoration(
-        labelText: 'Marital Status',
-        border: OutlineInputBorder(),
+  // ─── Submit button (same golden gradient as profile screen) ───────────────────
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 54,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: _isSubmitting
+            ? null
+            : const LinearGradient(
+                colors: [ThemeConfig.goldenYellow, Color(0xFFD4890A)],
+              ),
+        color: _isSubmitting ? ThemeConfig.borderLight : null,
+        boxShadow: _isSubmitting
+            ? null
+            : [
+                BoxShadow(
+                  color: ThemeConfig.goldenYellow.withValues(alpha: 0.4),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
       ),
-      items: _maritalStatuses
-          .map(
-            (status) => DropdownMenuItem<String>(
-          value: status,
-          child: Text(status),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _isSubmitting ? null : _submit,
+          child: Center(
+            child: _isSubmitting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: AppLoader(size: 24),
+                  )
+                : const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.save_outlined, color: Colors.white, size: 20),
+                      SizedBox(width: 10),
+                      Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
-      )
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedMaritalStatus = value;
-        });
-      },
-    );
-  }
-
-  Widget _buildPhoneField() {
-    return TextFormField(
-      controller: _phoneController,
-      decoration: const InputDecoration(
-        labelText: 'Phone',
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.phone,
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 255) {
-          return 'Phone must be less than 255 characters';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildAddressField() {
-    return TextFormField(
-      controller: _addressController,
-      decoration: const InputDecoration(
-        labelText: 'Address',
-        border: OutlineInputBorder(),
-      ),
-      maxLines: 2,
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 500) {
-          return 'Address must be less than 500 characters';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildCityField() {
-    return TextFormField(
-      controller: _cityController,
-      decoration: const InputDecoration(
-        labelText: 'City',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 255) {
-          return 'City must be less than 255 characters';
-        }
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
-    );
-  }
-
-  Widget _buildStateField() {
-    return TextFormField(
-      controller: _stateController,
-      decoration: const InputDecoration(
-        labelText: 'State',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 255) {
-          return 'State must be less than 255 characters';
-        }
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
-    );
-  }
-
-  Widget _buildPostCodeField() {
-    return TextFormField(
-      controller: _postCodeController,
-      decoration: const InputDecoration(
-        labelText: 'Post Code / ZIP Code',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 20) {
-          return 'Post code must be less than 20 characters';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildCountryField() {
-    return TextFormField(
-      controller: _countryController,
-      decoration: const InputDecoration(
-        labelText: 'Country',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        final trimmed = value?.trim() ?? '';
-        if (trimmed.length > 255) {
-          return 'Country must be less than 255 characters';
-        }
-        return null;
-      },
-      textCapitalization: TextCapitalization.words,
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-        color: ThemeConfig.navyBlue,
       ),
     );
   }
-}
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message, required this.onRetry});
+  // ─── Error state ──────────────────────────────────────────────────────────────
 
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ThemeConfig.goldenYellow,
-                foregroundColor: Colors.white,
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: ThemeConfig.errorColor.withValues(alpha: 0.08),
+                border: Border.all(
+                  color: ThemeConfig.errorColor.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                size: 40,
+                color: ThemeConfig.errorColor,
               ),
             ),
+            const SizedBox(height: 20),
+            Text(
+              _loadError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: ThemeConfig.textSecondaryLight,
+                fontSize: 14,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _RetryButton(onTap: _fetchProfile),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Section label (same as profile screen) ───────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [ThemeConfig.goldenYellow, Color(0xFFD4890A)],
+            ),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: ThemeConfig.goldenYellow.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: ThemeConfig.goldenYellow),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: ThemeConfig.navyBlue,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Retry button (same golden gradient) ─────────────────────────────────────
+
+class _RetryButton extends StatelessWidget {
+  const _RetryButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          colors: [ThemeConfig.goldenYellow, Color(0xFFD4890A)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeConfig.goldenYellow.withValues(alpha: 0.4),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Try Again',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
