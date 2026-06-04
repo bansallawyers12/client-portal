@@ -7,7 +7,7 @@ import '../../../models/appointment/appointment_variable_list.dart';
 import '../../../services/api_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/cache_helper.dart';
-import '../../dashboard/appointment_list/appointment_list.dart';
+import 'appointment_list/appointment_list.dart';
 import 'book_service_screen.dart';
 import 'booking_widget.dart';
 

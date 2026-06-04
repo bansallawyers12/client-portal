@@ -1109,6 +1109,14 @@ class ApiService {
     return response;
   }
 
+  static Future<Map<String, dynamic>> getAppointmentPaymentHistory(
+    int id,
+  ) async {
+    final endpoint = "${ApiConfig.appointments}/$id/payment-history";
+    final response = await _makeRequest(endpoint, _buildHeaders(), null, "GET");
+    return response;
+  }
+
   static Future<Map<String, dynamic>> cancelAppointment({
     required int id,
     required String reason,
