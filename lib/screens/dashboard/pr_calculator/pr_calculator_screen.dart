@@ -39,22 +39,28 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
 
   Future<void> _fetchPRPoints() async {
     final prefs = await SharedPreferences.getInstance();
+
     try {
       final cached = prefs.getString(_cacheKey);
 
       if (cached != null) {
         final cachedJson = jsonDecode(cached);
         final parsed = PRPointsResponse.fromJson(cachedJson);
+
         if (parsed.success) {
           final map = <AdditionalPointItem, bool>{};
-          for (var i in parsed.data.additionalPoints) {
-            map[i] = false;
+          for (var item in parsed.data.additionalPoints) {
+            map[item] = false;
           }
+
+          if (!mounted) return;
           setState(() {
             data = parsed.data;
             additionalPoints = map;
             loading = false;
           });
+
+          return;
         }
       }
     } catch (e) {
@@ -63,13 +69,17 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
 
     try {
       final response = await ApiService.getPRPoints();
+
       await prefs.setString(_cacheKey, jsonEncode(response));
+
       final parsed = PRPointsResponse.fromJson(response);
+
       if (parsed.success) {
         final map = <AdditionalPointItem, bool>{};
-        for (var i in parsed.data.additionalPoints) {
-          map[i] = false;
+        for (var item in parsed.data.additionalPoints) {
+          map[item] = false;
         }
+
         if (!mounted) return;
         setState(() {
           data = parsed.data;
@@ -79,7 +89,8 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
       }
     } catch (e) {
       debugPrint("API error: $e");
-      if (data == null && mounted) {
+
+      if (mounted) {
         setState(() => loading = false);
       }
     }
