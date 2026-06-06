@@ -54,11 +54,16 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
 
         final List data = decoded['data'] ?? decoded ?? [];
 
-        allOccupations = data.map((e) => Map<String, dynamic>.from(e)).toList();
+        allOccupations =
+            data.map((e) => Map<String, dynamic>.from(e)).toList();
 
-        if (mounted) {
-          setState(() => loading = false);
-        }
+        if (!mounted) return;
+
+        setState(() {
+          loading = false;
+        });
+
+        return;
       }
     } catch (e) {
       debugPrint("Cache error: $e");
@@ -69,14 +74,15 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
 
       final List data = res['data'] ?? [];
 
-      allOccupations = data.map((e) => Map<String, dynamic>.from(e)).toList();
+      allOccupations =
+          data.map((e) => Map<String, dynamic>.from(e)).toList();
 
-      await SharedPreferences.getInstance().then(
-        (p) => p.setString(_cacheKey, jsonEncode(res)),
-      );
+      await prefs.setString(_cacheKey, jsonEncode(res));
     } catch (e) {
       debugPrint("API error: $e");
     }
+
+    if (!mounted) return;
 
     setState(() {
       loading = false;
