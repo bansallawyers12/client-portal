@@ -55,6 +55,8 @@ class _StudentFundCalculatorScreenState
             data = cachedJson['data'];
             loading = false;
           });
+
+          return;
         }
       }
     } catch (e) {
@@ -77,7 +79,7 @@ class _StudentFundCalculatorScreenState
     } catch (e) {
       debugPrint("API error: $e");
 
-      if (data == null && mounted) {
+      if (mounted) {
         setState(() => loading = false);
       }
     }
