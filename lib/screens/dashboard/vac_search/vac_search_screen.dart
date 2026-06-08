@@ -58,11 +58,14 @@ class _VacSearchScreenState extends State<VacSearchScreen> {
         if (cachedJson['success'] == true) {
           final List data = cachedJson['data']['data'];
 
-          allVisas = data.map<VisaModel>((e) => VisaModel.fromJson(e)).toList();
+          allVisas =
+              data.map<VisaModel>((e) => VisaModel.fromJson(e)).toList();
 
-          if (mounted) {
-            setState(() => loading = false);
-          }
+          if (!mounted) return;
+
+          setState(() => loading = false);
+
+          return;
         }
       }
     } catch (e) {
@@ -77,15 +80,16 @@ class _VacSearchScreenState extends State<VacSearchScreen> {
       if (res['success'] == true) {
         final List data = res['data']['data'];
 
-        allVisas = data.map<VisaModel>((e) => VisaModel.fromJson(e)).toList();
+        allVisas =
+            data.map<VisaModel>((e) => VisaModel.fromJson(e)).toList();
       }
     } catch (e) {
       debugPrint("API error: $e");
     }
 
-    if (mounted) {
-      setState(() => loading = false);
-    }
+    if (!mounted) return;
+
+    setState(() => loading = false);
   }
 
   void _onSearchChanged(String value) {

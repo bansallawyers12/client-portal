@@ -59,37 +59,47 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
 
     try {
       final cached = prefs.getString(_postcodeCacheKey);
+
       if (cached != null) {
         final decoded = jsonDecode(cached);
 
-        allPostcodes =
-            (decoded as List)
-                .map((e) => PostcodeSearchItem.fromJson(e))
-                .toList();
+        allPostcodes = (decoded as List)
+            .map((e) => PostcodeSearchItem.fromJson(e))
+            .toList();
 
-        if (mounted) {
-          setState(() => loading = false);
-        }
+        if (!mounted) return;
+
+        setState(() {
+          loading = false;
+        });
+        return;
       }
     } catch (e) {
       debugPrint("Cache error: $e");
     }
+
     try {
       final response = await ApiService.postcodeAll();
-      if (response['success']) {
-        allPostcodes =
-            (response['data'] as List)
-                .map((e) => PostcodeSearchItem.fromJson(e))
-                .toList();
-        await prefs.setString(_postcodeCacheKey, jsonEncode(response['data']));
+
+      if (response['success'] == true) {
+        allPostcodes = (response['data'] as List)
+            .map((e) => PostcodeSearchItem.fromJson(e))
+            .toList();
+
+        await prefs.setString(
+          _postcodeCacheKey,
+          jsonEncode(response['data']),
+        );
       }
     } catch (e) {
       debugPrint("API error: $e");
     }
 
-    if (mounted) {
-      setState(() => loading = false);
-    }
+    if (!mounted) return;
+
+    setState(() {
+      loading = false;
+    });
   }
 
   void _onSearchChanged(String value) {
