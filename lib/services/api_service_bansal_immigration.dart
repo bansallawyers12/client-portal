@@ -191,5 +191,31 @@ class ApiServiceBansalImmigration{
     return 'flutter-device-token';
   }
 
+  // Blog Methods (public — no auth required)
+  static Future<Map<String, dynamic>> getBlogs({
+    int page = 1,
+    int perPage = 10,
+  }) async {
+    final endpoint =
+        '${ApiConfigBansalImmigration.blogListEndpoint}?page=$page&per_page=$perPage';
+    return await _makeRequest(
+      endpoint,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
 
+  static Future<Map<String, dynamic>> getBlogDetail({
+    required int blogId,
+  }) async {
+    final endpoint =
+        '${ApiConfigBansalImmigration.blogDetailEndpoint}/$blogId';
+    return await _makeRequest(
+      endpoint,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
 }

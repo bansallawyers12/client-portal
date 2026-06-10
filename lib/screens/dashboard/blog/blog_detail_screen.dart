@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
 
 import '../../../config/theme_config.dart';
-import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/responsive_utils.dart';
 
 class BlogDetailScreen extends StatefulWidget {
@@ -57,8 +57,9 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
 
     Map<String, dynamic>? loaded;
     try {
-      final response = await ApiService.getBlogDetail(blogId: widget.blogId)
-          .timeout(const Duration(seconds: 30));
+      final response = await ApiServiceBansalImmigration.getBlogDetail(
+        blogId: widget.blogId,
+      ).timeout(const Duration(seconds: 30));
       if (response['success'] == true) loaded = response['data'];
     } catch (e) {
       debugPrint('Error fetching blog: $e');

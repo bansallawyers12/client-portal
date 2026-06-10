@@ -12,6 +12,7 @@ import '../../../models/case_summary.dart';
 import '../../../models/dashboard_summary.dart';
 import '../../../models/recent_activity.dart';
 import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
@@ -109,7 +110,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     setState(() => _isLoadingBlogs = true);
 
     try {
-      final response = await ApiService.getFeaturedBlogs(page: 1, perPage: 5);
+      final response = await ApiServiceBansalImmigration.getBlogs(page: 1, perPage: 5);
       if (response['success'] == true) {
         final List list = response['data'];
         _blogs = list.map((e) => Blog.fromJson(e)).toList();

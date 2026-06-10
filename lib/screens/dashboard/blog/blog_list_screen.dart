@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme_config.dart';
 import '../../../models/blog.dart';
-import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/responsive_utils.dart';
 
 class BlogListScreen extends StatefulWidget {
@@ -43,15 +43,15 @@ class _BlogListScreenState extends State<BlogListScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService.getFeaturedBlogs(
+      final response = await ApiServiceBansalImmigration.getBlogs(
         page: _currentPage,
         perPage: 10,
       ).timeout(const Duration(seconds: 30));
 
       if (response['success'] == true) {
-        final List list = response['data'];
+        final List list = response['data'] ?? [];
         final blogs = list.map((e) => Blog.fromJson(e)).toList();
-        final pagination = response['pagination'];
+        final pagination = response['pagination'] ?? {};
 
         if (!mounted) return;
         setState(() {
@@ -61,7 +61,7 @@ class _BlogListScreenState extends State<BlogListScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching blogs: $e");
+      debugPrint('Error fetching blogs: $e');
     }
 
     if (!mounted) return;
