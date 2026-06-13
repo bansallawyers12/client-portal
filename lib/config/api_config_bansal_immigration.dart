@@ -6,4 +6,8 @@ class ApiConfigBansalImmigration {
   // Blog endpoints
   static const String blogListEndpoint = '/blogs/list';
   static const String blogDetailEndpoint = '/blogs/detail';
+
+  // PR point calculator endpoints
+  static const String prPointsCalcList = '/pr-point-calc-lists';
+  static const String prPointCalcResult = '/pr-point-calc-result';
 }

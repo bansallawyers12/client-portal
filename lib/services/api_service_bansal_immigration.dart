@@ -218,4 +218,25 @@ class ApiServiceBansalImmigration{
       'GET',
     );
   }
+
+  // PR Point Calculator Methods
+  static Future<Map<String, dynamic>> getPRPoints() async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.prPointsCalcList,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
+
+  static Future<Map<String, dynamic>> calculatePRPoints({
+    required Map<String, dynamic> payload,
+  }) async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.prPointCalcResult,
+      _buildHeaders(requiresAuth: false),
+      payload,
+      'POST',
+    );
+  }
 }

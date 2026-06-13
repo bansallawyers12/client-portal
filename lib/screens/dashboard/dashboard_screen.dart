@@ -125,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _isLoadingBlogs = true);
 
     try {
-      final response = await ApiService.getFeaturedBlogs(
+      final response = await ApiServiceBansalImmigration.getBlogs(
         page: 1,
         perPage: 5,
       );

@@ -4,7 +4,7 @@ import 'package:client/models/pr_points_response.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
@@ -68,7 +68,7 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     }
 
     try {
-      final response = await ApiService.getPRPoints();
+      final response = await ApiServiceBansalImmigration.getPRPoints();
 
       await prefs.setString(_cacheKey, jsonEncode(response));
 
@@ -520,7 +520,7 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     );
 
     try {
-      final response = await ApiService.calculatePRPoints(payload: payload);
+      final response = await ApiServiceBansalImmigration.calculatePRPoints(payload: payload);
 
       Navigator.pop(context);
 

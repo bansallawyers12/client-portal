@@ -1008,35 +1008,6 @@ class ApiService {
     return response;
   }
 
-  static Future<Map<String, dynamic>> getFeaturedBlogs({
-    int page = 1,
-    int perPage = 10,
-  }) async {
-    final endpoint =
-        "${ApiConfig.blogListEndpoint}?page=$page&per_page=$perPage";
-    return await _makeRequest(endpoint, _buildHeaders(), null, 'GET');
-  }
-
-  static Future<Map<String, dynamic>> getBlogDetail({
-    required int blogId,
-  }) async {
-    final endpoint = "${ApiConfig.blogDetailEndpoint}/$blogId";
-
-    return await _makeRequest(endpoint, _buildHeaders(), null, 'GET');
-  }
-
-  static Future<Map<String, dynamic>> getPRPoints() async {
-    final endpoint = ApiConfig.prPointsCalcList;
-    return await _makeRequest(endpoint, _buildHeaders(), null, 'GET');
-  }
-
-  static Future<Map<String, dynamic>> calculatePRPoints({
-    required Map<String, dynamic> payload,
-  }) async {
-    final endpoint = ApiConfig.prPointCalcResult;
-    return await _makeRequest(endpoint, _buildHeaders(), payload, 'POST');
-  }
-
   static Future<Map<String, dynamic>> getStudentCalcLists() async {
     final endpoint = ApiConfig.studentCalcList;
     return await _makeRequest(endpoint, _buildHeaders(), null, 'GET');
