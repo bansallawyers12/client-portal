@@ -57,18 +57,6 @@ class ApiConfig {
   static const String registerFCMToken = "/fcm/register-token";
   static const String unregisterFCMToken = "/fcm/unregister-token";
 
-  static const String studentCalcList = "/student-calc-lists";
-  static const String studentCalcResult = "/student-calc-result";
-
-  static const String occupationFinder = "/occupation-finder";
-  static const String occupationAll = "/occupation-all";
-  static const String searchOccupation = "/search-occupation";
-  static const String occupationResult = "/occupation-result";
-
-  static const String postCodeAll = "/postcode-all";
-  static const String postCodeSearch = "/postcode-search";
-  static const String postCodeResult = "/postcode-result";
-
   static const String appointmentVariableLists = "/appointment-variable-lists";
   static const String appointments = "/appointments";
   static const String appointmentsWithoutLogin = "/appointments/add-appointment-without-login";

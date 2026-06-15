@@ -239,4 +239,65 @@ class ApiServiceBansalImmigration{
       'POST',
     );
   }
+
+  // Student Fund Calculator Methods
+  static Future<Map<String, dynamic>> getStudentCalcLists() async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.studentCalcList,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
+
+  static Future<Map<String, dynamic>> calculateStudentFund({
+    required Map<String, dynamic> payload,
+  }) async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.studentCalcResult,
+      _buildHeaders(requiresAuth: false),
+      payload,
+      'POST',
+    );
+  }
+
+  // Postcode Checker Methods
+  static Future<Map<String, dynamic>> postcodeAll() async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.postCodeAll,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
+
+  static Future<Map<String, dynamic>> postcodeSearch(String query) async {
+    final endpoint = '${ApiConfigBansalImmigration.postCodeSearch}?q=$query';
+    return await _makeRequest(endpoint, _buildHeaders(requiresAuth: false), null, 'GET');
+  }
+
+  static Future<Map<String, dynamic>> postcodeResult(String postcode) async {
+    final endpoint = '${ApiConfigBansalImmigration.postCodeResult}?postcode=$postcode';
+    return await _makeRequest(endpoint, _buildHeaders(requiresAuth: false), null, 'GET');
+  }
+
+  // Occupation Methods
+  static Future<Map<String, dynamic>> getAllOccupations() async {
+    return await _makeRequest(
+      ApiConfigBansalImmigration.occupationAll,
+      _buildHeaders(requiresAuth: false),
+      null,
+      'GET',
+    );
+  }
+
+  static Future<Map<String, dynamic>> searchOccupation(String query) async {
+    final endpoint = '${ApiConfigBansalImmigration.searchOccupation}?q=$query&limit=20&page=1';
+    return await _makeRequest(endpoint, _buildHeaders(requiresAuth: false), null, 'GET');
+  }
+
+  static Future<Map<String, dynamic>> getOccupationDetails(String code) async {
+    final endpoint = '${ApiConfigBansalImmigration.occupationResult}?occupation_code=$code';
+    return await _makeRequest(endpoint, _buildHeaders(requiresAuth: false), null, 'GET');
+  }
 }

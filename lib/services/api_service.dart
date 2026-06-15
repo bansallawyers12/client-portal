@@ -995,67 +995,6 @@ class ApiService {
     return response;
   }
 
-  static Future<Map<String, dynamic>> searchOccupation(String query) async {
-    String endpoint = "${ApiConfig.searchOccupation}/?q=$query";
-
-    final response = await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-    return response;
-  }
-
-  static Future<Map<String, dynamic>> getAllOccupations() async {
-    String endpoint = ApiConfig.occupationAll;
-    final response = await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-    return response;
-  }
-
-  static Future<Map<String, dynamic>> getStudentCalcLists() async {
-    final endpoint = ApiConfig.studentCalcList;
-    return await _makeRequest(endpoint, _buildHeaders(), null, 'GET');
-  }
-
-  static Future<Map<String, dynamic>> calculateStudentFund({
-    required Map<String, dynamic> payload,
-  }) async {
-    final endpoint = ApiConfig.studentCalcResult;
-    return await _makeRequest(endpoint, _buildHeaders(), payload, 'POST');
-  }
-
-  static Future<Map<String, dynamic>> occupationFinder(String query) async {
-    String endpoint = "${ApiConfig.occupationFinder}/?q=$query";
-    return await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-  }
-
-  static Future<Map<String, dynamic>> occupationSearch(String query) async {
-    String endpoint = "${ApiConfig.searchOccupation}?q=$query&limit=20&page=1";
-
-    return await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-  }
-
-  static Future<Map<String, dynamic>> getOccupationDetails(String code) async {
-    String endpoint = "${ApiConfig.occupationResult}?occupation_code=$code";
-
-    return await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-  }
-
-  static Future<Map<String, dynamic>> postcodeAll() async {
-    String endpoint = ApiConfig.postCodeAll;
-    return await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-  }
-
-  static Future<Map<String, dynamic>> postcodeSearch(String query) async {
-    String endpoint = "${ApiConfig.postCodeSearch}?q=$query";
-
-    final response = await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-    return response;
-  }
-
-  static Future<Map<String, dynamic>> postcodeResult(String postcode) async {
-    String endpoint = "${ApiConfig.postCodeResult}?postcode=$postcode";
-
-    final response = await _makeRequest(endpoint, _buildHeaders(), null, "GET");
-    return response;
-  }
-
   static Future<Map<String, dynamic>> getAppointmentVariableLists() async {
     const endpoint = ApiConfig.appointmentVariableLists;
 

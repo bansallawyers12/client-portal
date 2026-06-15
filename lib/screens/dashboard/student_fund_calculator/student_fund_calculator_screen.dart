@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
@@ -64,7 +64,7 @@ class _StudentFundCalculatorScreenState
     }
 
     try {
-      final res = await ApiService.getStudentCalcLists();
+      final res = await ApiServiceBansalImmigration.getStudentCalcLists();
 
       await prefs.setString(_studentCalcCacheKey, jsonEncode(res));
 
@@ -568,7 +568,7 @@ class _StudentFundCalculatorScreenState
     );
 
     try {
-      final res = await ApiService.calculateStudentFund(payload: payload);
+      final res = await ApiServiceBansalImmigration.calculateStudentFund(payload: payload);
 
       Navigator.pop(context);
 

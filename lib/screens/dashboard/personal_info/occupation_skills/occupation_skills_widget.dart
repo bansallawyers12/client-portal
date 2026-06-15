@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../config/theme_config.dart';
 import '../../../../models/personal_information/occupation.dart';
 import '../../../../services/api_service.dart';
+import '../../../../services/api_service_bansal_immigration.dart';
 
 class OccupationSkillsWidget extends StatefulWidget {
   final List<Occupation> occupations;
@@ -79,7 +80,7 @@ class _OccupationSkillsWidgetState extends State<OccupationSkillsWidget> {
       return;
     }
 
-    final response = await ApiService.searchOccupation(query);
+    final response = await ApiServiceBansalImmigration.searchOccupation(query);
 
     if (response["success"] == true && response["data"] != null) {
       List<String> titles = List<String>.from(

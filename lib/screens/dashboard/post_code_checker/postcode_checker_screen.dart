@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:client/services/api_service.dart';
+import 'package:client/services/api_service_bansal_immigration.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,7 +79,7 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
     }
 
     try {
-      final response = await ApiService.postcodeAll();
+      final response = await ApiServiceBansalImmigration.postcodeAll();
 
       if (response['success'] == true) {
         allPostcodes = (response['data'] as List)
@@ -137,7 +137,7 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
       result = null;
     });
     try {
-      final response = await ApiService.postcodeResult(postcode);
+      final response = await ApiServiceBansalImmigration.postcodeResult(postcode);
       if (response['success']) {
         setState(() {
           result = PostcodeResult.fromJson(response['data']);

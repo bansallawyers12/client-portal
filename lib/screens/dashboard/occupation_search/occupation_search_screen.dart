@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../config/theme_config.dart';
-import '../../../services/api_service.dart';
+import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
 
@@ -70,7 +70,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     }
 
     try {
-      final res = await ApiService.getAllOccupations();
+      final res = await ApiServiceBansalImmigration.getAllOccupations();
 
       final List data = res['data'] ?? [];
 
@@ -132,7 +132,7 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     });
 
     try {
-      final res = await ApiService.getOccupationDetails(code);
+      final res = await ApiServiceBansalImmigration.getOccupationDetails(code);
 
       final dataList = res['data'];
 
