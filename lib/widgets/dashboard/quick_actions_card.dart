@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../../services/auth_service.dart';
+import '../common/pressable_scale.dart';
 import '../dialog/login_signup_dialog.dart';
 
 class QuickActionsCard extends StatelessWidget {
@@ -67,14 +68,15 @@ class QuickActionsCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+            // Frosted dark-glass card sitting on the slate gradient
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -97,6 +99,7 @@ class QuickActionsCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -255,7 +258,7 @@ class QuickActionsCard extends StatelessWidget {
     required double fontSize,
     required double padding,
   }) {
-    return InkWell(
+    return PressableScale(
       onTap: () => _handleTap(context, onTap),
       borderRadius: BorderRadius.circular(_radius),
       child: Container(
@@ -307,7 +310,7 @@ class QuickActionsCard extends StatelessWidget {
     required double padding,
     required double iconPad,
   }) {
-    return InkWell(
+    return PressableScale(
       onTap: () => _handleTap(context, onTap),
       borderRadius: BorderRadius.circular(_radius),
       child: Container(
@@ -365,7 +368,7 @@ class QuickActionsCard extends StatelessWidget {
     return StaggeredGridTile.count(
       crossAxisCellCount: 2,
       mainAxisCellCount: isWeb ? 0.85 : 1.1,
-      child: InkWell(
+      child: PressableScale(
         onTap: () => _handleTap(context, onTap),
         borderRadius: BorderRadius.circular(_radius),
         child: Container(

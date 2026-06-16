@@ -68,20 +68,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFFF9B000),
-      foregroundColor: Colors.black,
-      elevation: 0,
+      backgroundColor: Colors.transparent,
+      foregroundColor: Colors.white,
+      elevation: 10,
+      shadowColor: const Color(0xFFF9B000).withValues(alpha: 0.35),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFFFCA28), Color(0xFFF9B000)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+        ),
+      ),
       title: isLoadingUser
           ? null
-          : Text(
-              isAuthenticated && userName != null && userName!.isNotEmpty
-                  ? "Welcome, $userName"
-                  : "Welcome, Guest",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.white,
-              ),
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAuthenticated && userName != null && userName!.isNotEmpty
+                      ? "Welcome, $userName"
+                      : "Welcome, Guest",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  "Bansal Immigration",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 11,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
             ),
       actions: [
         Stack(
@@ -150,9 +178,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: 70,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: const BoxDecoration(
-          color: Color(0xFFF2F2F2),
+          color: Color(0xFF101722),
           boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, -2)),
+            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, -2)),
           ],
         ),
         child: Padding(
@@ -160,11 +188,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Container(
             height: 55,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: Colors.white.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha:0.05),
+                  color: Colors.black.withValues(alpha:0.20),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -179,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               indicatorPadding: const EdgeInsets.all(4),
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
-              unselectedLabelColor: Colors.black87,
+              unselectedLabelColor: Colors.white70,
               splashFactory: NoSplash.splashFactory,
               overlayColor: const WidgetStatePropertyAll(Colors.transparent),
               labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
@@ -223,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (isDesktop) {
             // Desktop: side navigation rail + content
             return Scaffold(
-              backgroundColor: Colors.white,
+              backgroundColor: const Color(0xFF223344),
               appBar: _buildAppBar(),
               body: SafeArea(
                 bottom: false,
@@ -285,7 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           // Mobile / Tablet: bottom tab bar
           return Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: const Color(0xFF223344),
             appBar: _buildAppBar(),
             body: SafeArea(
               bottom: false,

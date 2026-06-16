@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:client/services/stripe_service.dart';
@@ -17,6 +18,7 @@ import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common/error_widget.dart';
+import '../../../widgets/common/pressable_scale.dart';
 import '../../../widgets/dashboard/quick_actions_card.dart';
 import '../../../widgets/dialog/login_signup_dialog.dart';
 import '../book_appointment/book_location_screen.dart';
@@ -41,8 +43,17 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   List<Blog> _blogs = [];
   bool _isLoadingBlogs = false;
 
+  // Auto-scrolling news carousel (infinite loop via modulo indexing)
+  PageController _blogController = PageController(viewportFraction: 0.84);
+  Timer? _blogTimer;
+  int _blogPage = 0;
+
   String? userName;
   bool isLoadingUser = true;
+
+  // Dark slate → near-black body gradient (matches splash screen)
+  static const Color _bgTop = Color(0xFF223344);
+  static const Color _bgBottom = Color(0xFF101722);
 
   @override
   void initState() {
@@ -118,6 +129,37 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     } catch (_) {}
 
     setState(() => _isLoadingBlogs = false);
+    _setupBlogCarousel();
+  }
+
+  void _setupBlogCarousel() {
+    _blogTimer?.cancel();
+    if (_blogs.length < 2) return;
+
+    // Start in the middle of a huge virtual range so it can loop forever
+    // in both directions; the real blog = page % _blogs.length.
+    _blogController.dispose();
+    final base = _blogs.length * 1000;
+    _blogPage = base;
+    _blogController =
+        PageController(viewportFraction: 0.84, initialPage: base);
+
+    _blogTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_blogController.hasClients) return;
+      _blogPage += 1; // always forward — last wraps to first seamlessly
+      _blogController.animateToPage(
+        _blogPage,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _blogTimer?.cancel();
+    _blogController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
@@ -188,9 +230,17 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child:
+      backgroundColor: _bgTop,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_bgTop, _bgBottom],
+          ),
+        ),
+        child: SafeArea(
+          child:
             _isLoading
                 ? const AppLoader()
                 : _errorMessage != null
@@ -212,14 +262,17 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                           maxWidth: AppResponsive.maxContentWidth,
                         ),
                         child: Container(
-                          color: Colors.white,
+                          color: Colors.transparent,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              const SizedBox(height: 8),
                               _buildRecentUpdatesSection(),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
                               Padding(
-                                padding: AppResponsive.pagePadding(context),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppResponsive.isDesktop(context) ? 32 : 10,
+                                ),
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -300,6 +353,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                     ),
                   ),
                 ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -324,9 +378,9 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     );
     final double sectionHeight = AppResponsive.value<double>(
       context,
-      mobile: 163,
-      tablet: 186,
-      desktop: 218,
+      mobile: 195,
+      tablet: 220,
+      desktop: 255,
     );
     final isDesktop = AppResponsive.isDesktop(context);
 
@@ -348,7 +402,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                     style: TextStyle(
                       fontSize: isDesktop ? 20 : 18,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E1464),
+                      color: Colors.white,
                       letterSpacing: -0.4,
                     ),
                   ),
@@ -357,7 +411,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                     "Latest immigration news",
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Colors.grey.shade500,
+                      color: Colors.white.withValues(alpha: 0.55),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -454,22 +508,84 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                   ? Center(
                       child: Text(
                         'No updates available',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
+                        ),
                       ),
                     )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _blogs.length,
-                      padding: AppResponsive.horizontalPadding(context),
-                      itemBuilder: (context, index) =>
-                          _buildBlogCard(_blogs[index], index, cardWidth),
+                  : PageView.builder(
+                      controller: _blogController,
+                      // null itemCount => infinite; index % length picks the blog
+                      itemCount: _blogs.length > 1 ? null : _blogs.length,
+                      onPageChanged: (i) => _blogPage = i,
+                      itemBuilder: (context, index) {
+                        return AnimatedBuilder(
+                          animation: _blogController,
+                          builder: (context, child) {
+                            double scale = 1.0;
+                            if (_blogController.position.haveDimensions) {
+                              final page = _blogController.page ?? 0.0;
+                              scale = (1 - ((page - index).abs() * 0.16))
+                                  .clamp(0.84, 1.0);
+                            } else if (index != _blogController.initialPage) {
+                              scale = 0.84;
+                            }
+                            return Transform.scale(scale: scale, child: child);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: _buildBlogCard(
+                              _blogs[index % _blogs.length],
+                            ),
+                          ),
+                        );
+                      },
                     ),
         ),
+        if (_blogs.length > 1) ...[
+          const SizedBox(height: 12),
+          _buildBlogIndicator(),
+        ],
       ],
     );
   }
 
-  Widget _buildBlogCard(Blog blog, int index, double cardWidth) {
+  Widget _buildBlogIndicator() {
+    return Center(
+      child: AnimatedBuilder(
+        animation: _blogController,
+        builder: (context, _) {
+          final rawPage = _blogController.hasClients &&
+                  _blogController.position.haveDimensions
+              ? (_blogController.page ?? 0).round()
+              : _blogPage;
+          final current = rawPage % _blogs.length;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_blogs.length, (i) {
+              final active = i == current;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: active ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: active
+                      ? const Color(0xFFF9B000)
+                      : Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBlogCard(Blog blog) {
     const double stripHeight = 64.0;
 
     void handleTap() {
@@ -488,11 +604,10 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
       }
     }
 
-    return GestureDetector(
+    return PressableScale(
       onTap: handleTap,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: cardWidth,
-        margin: EdgeInsets.only(right: index == _blogs.length - 1 ? 0 : 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           boxShadow: [

@@ -6,4 +6,5 @@
     <color name="on_primary">#FFFFFF</color>
     <color name="background">#FFFFFF</color>
     <color name="white">#FFFFFF</color> <!-- Add this -->
+    <color name="splash_background">#101722</color> <!-- matches Flutter animated splash -->
 </resources>

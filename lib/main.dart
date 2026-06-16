@@ -55,6 +55,7 @@ import 'firebase_options.dart';
 import 'services/firebase_service.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/splash/splash_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -386,7 +387,8 @@ class MyAppWithTheme extends StatelessWidget {
           themeMode: mode,
           initialRoute: '/',
           routes: {
-            '/': (context) => const AuthWrapper(),
+            '/': (context) => const SplashScreen(),
+            '/home': (context) => const AuthWrapper(),
             '/login': (context) => const LoginScreen(),
             '/register': (context) => const RegisterScreen(),
             '/forgot-password': (context) => const ForgotPasswordScreen(),
