@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Wraps a child so it scales down slightly while pressed and springs
-/// back on release — gives every tappable card a tactile, modern feel.
+/// Wraps a child so it zooms out while pressed and springs back with a
+/// subtle zoom-in overshoot on release — a tactile "pop" on every tap.
 class PressableScale extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -12,7 +12,7 @@ class PressableScale extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
-    this.pressedScale = 0.95,
+    this.pressedScale = 0.93,
     this.borderRadius,
   });
 
@@ -36,8 +36,10 @@ class _PressableScaleState extends State<PressableScale> {
       onTap: widget.onTap,
       child: AnimatedScale(
         scale: _pressed ? widget.pressedScale : 1.0,
-        duration: const Duration(milliseconds: 130),
-        curve: Curves.easeOut,
+        // Quick easeOut zoom-out on press; slower easeOutBack on release
+        // gives a springy zoom-in overshoot before settling.
+        duration: Duration(milliseconds: _pressed ? 120 : 280),
+        curve: _pressed ? Curves.easeOut : Curves.easeOutBack,
         child: widget.child,
       ),
     );
