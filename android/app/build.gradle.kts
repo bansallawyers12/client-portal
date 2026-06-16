@@ -21,7 +21,7 @@ val keystoreProperties = Properties().apply {
 android {
     namespace = "com.bansalimmigration.clientportal"
     compileSdk = 36
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "27.1.12297006"
 
     defaultConfig {
         applicationId = "com.bansalimmigration.clientportal"
@@ -33,10 +33,12 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { File(it as String) }
-            storePassword = keystoreProperties["storePassword"] as String
+            if (keystoreProperties["keyAlias"] != null) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = keystoreProperties["storeFile"]?.let { File(it as String) }
+                storePassword = keystoreProperties["storePassword"] as String
+            }
         }
     }
 

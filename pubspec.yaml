@@ -158,7 +158,6 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/hummr-d17f7-3e476ccd9405.json
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
