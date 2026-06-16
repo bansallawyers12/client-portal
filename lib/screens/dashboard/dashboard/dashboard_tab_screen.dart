@@ -144,7 +144,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     _blogController =
         PageController(viewportFraction: 0.84, initialPage: base);
 
-    _blogTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _blogTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || !_blogController.hasClients) return;
       _blogPage += 1; // always forward — last wraps to first seamlessly
       _blogController.animateToPage(
