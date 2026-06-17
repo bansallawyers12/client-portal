@@ -52,8 +52,11 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   bool isLoadingUser = true;
 
   // Dark slate → near-black body gradient (matches splash screen)
-  static const Color _bgTop = Color(0xFF223344);
-  static const Color _bgBottom = Color(0xFF101722);
+  // Light theme: white → soft off-white background.
+  static const Color _bgTop = Color(0xFFFFFFFF);
+  static const Color _bgBottom = Color(0xFFF5F7FA);
+  static const Color _heading = Color(0xFF1F2937); // dark slate text
+  static const Color _subtle = Color(0xFF64748B); // slate-grey text
 
   @override
   void initState() {
@@ -230,7 +233,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgTop,
+      backgroundColor: _bgBottom,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -402,7 +405,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                     style: TextStyle(
                       fontSize: isDesktop ? 20 : 18,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: _heading,
                       letterSpacing: -0.4,
                     ),
                   ),
@@ -411,7 +414,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                     "Latest immigration news",
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: Colors.white.withValues(alpha: 0.55),
+                      color: _subtle,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -509,7 +512,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                       child: Text(
                         'No updates available',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
+                          color: _subtle,
                           fontSize: 14,
                         ),
                       ),
@@ -574,7 +577,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                 decoration: BoxDecoration(
                   color: active
                       ? const Color(0xFFF9B000)
-                      : Colors.white.withValues(alpha: 0.25),
+                      : const Color(0xFFCBD5E1),
                   borderRadius: BorderRadius.circular(3),
                 ),
               );

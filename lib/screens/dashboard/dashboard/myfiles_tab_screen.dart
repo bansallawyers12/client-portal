@@ -646,13 +646,13 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF223344),
+      backgroundColor: const Color(0xFFF5F7FA),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF223344), Color(0xFF101722)],
+            colors: [Color(0xFFFFFFFF), Color(0xFFF5F7FA)],
           ),
         ),
         child: SafeArea(

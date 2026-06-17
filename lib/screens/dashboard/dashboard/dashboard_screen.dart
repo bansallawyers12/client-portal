@@ -188,7 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildBottomNav() {
     return Container(
-      color: const Color(0xFF101722),
+      color: Colors.white,
       child: Builder(
         builder: (navContext) {
           final controller = DefaultTabController.of(navContext);
@@ -199,6 +199,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // Only Home & Files are tabs; the rest open as full pages.
                 currentIndex: controller.index,
                 tabCount: 2,
+                barColor: Colors.white,
+                unselectedColor: const Color(0xFF94A3B8),
                 onTap: (i) {
                   switch (i) {
                     case 0:
@@ -255,7 +257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (isDesktop) {
             // Desktop: side navigation rail + content
             return Scaffold(
-              backgroundColor: const Color(0xFF223344),
+              backgroundColor: const Color(0xFFF5F7FA),
               appBar: _buildAppBar(),
               body: SafeArea(
                 bottom: false,
@@ -317,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           // Mobile / Tablet: bottom tab bar
           return Scaffold(
-            backgroundColor: const Color(0xFF223344),
+            backgroundColor: const Color(0xFFF5F7FA),
             appBar: _buildAppBar(),
             body: SafeArea(
               bottom: false,

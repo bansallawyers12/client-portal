@@ -11,9 +11,10 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   static const Color _primary  = Color(0xFF5E8B7E); // sage green glow
-  static const Color _light    = Color(0xFF223344); // dark slate top
+  static const Color _light    = Color(0xFFFFFFFF); // white top
   static const Color _gold     = Color(0xFFF9B000); // brand gold
-  static const Color _bgBottom = Color(0xFF101722); // very dark bottom
+  static const Color _bgBottom = Color(0xFFF5F7FA); // soft off-white bottom
+  static const Color _textDark = Color(0xFF1F2937); // dark slate text
 
   // 2.4 seconds total — all elements animate in together
   static const Duration _total = Duration(milliseconds: 2400);
@@ -34,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
     ));
 
     _ctrl = AnimationController(vsync: this, duration: _total);
@@ -121,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 200,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.04),
+                        color: _gold.withValues(alpha: 0.07),
                       ),
                     ),
                   ),
@@ -146,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen>
                       height: 180,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _primary.withValues(alpha: 0.18),
+                        color: _primary.withValues(alpha: 0.12),
                       ),
                     ),
                   ),
@@ -233,7 +234,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 const Text(
                                   'Visamate',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: _textDark,
                                     fontSize: 32,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.5,
@@ -243,7 +244,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 Text(
                                   'BANSAL IMMIGRATION',
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.65),
+                                    color: _textDark.withValues(alpha: 0.55),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 3.0,

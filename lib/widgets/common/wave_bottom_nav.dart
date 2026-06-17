@@ -24,6 +24,7 @@ class WaveBottomNav extends StatefulWidget {
   final Color barColor;
   final Color accentTop;
   final Color accentBottom;
+  final Color unselectedColor;
 
   const WaveBottomNav({
     super.key,
@@ -34,6 +35,7 @@ class WaveBottomNav extends StatefulWidget {
     this.barColor = const Color(0xFF101722),
     this.accentTop = const Color(0xFFFFCA28),
     this.accentBottom = const Color(0xFFF9B000),
+    this.unselectedColor = const Color(0xFF94A3B8),
   }) : tabCount = tabCount ?? items.length;
 
   @override
@@ -151,7 +153,7 @@ class _WaveBottomNavState extends State<WaveBottomNav>
                                         : Icon(
                                             widget.items[i].icon,
                                             size: 23,
-                                            color: Colors.white70,
+                                            color: widget.unselectedColor,
                                           ),
                                   ),
                                   const SizedBox(height: 5),
@@ -170,7 +172,7 @@ class _WaveBottomNavState extends State<WaveBottomNav>
                                             : FontWeight.w500,
                                         color: isActive
                                             ? widget.accentBottom
-                                            : Colors.white70,
+                                            : widget.unselectedColor,
                                       ),
                                       child: Text(
                                         widget.items[i].label,
@@ -280,8 +282,15 @@ class _WavePainter extends CustomPainter {
       ..lineTo(0, size.height)
       ..close();
 
-    // Soft drop shadow above the bar.
-    canvas.drawShadow(fillPath, Colors.black.withValues(alpha: 0.55), 12, false);
+    final isLight = color.computeLuminance() > 0.5;
+
+    // Soft drop shadow above the bar (lighter for a light theme).
+    canvas.drawShadow(
+      fillPath,
+      Colors.black.withValues(alpha: isLight ? 0.18 : 0.55),
+      isLight ? 8 : 12,
+      false,
+    );
 
     // Subtle vertical gradient gives the bar depth.
     final fill = Paint()
@@ -290,7 +299,7 @@ class _WavePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          Color.lerp(color, Colors.white, 0.05)!,
+          isLight ? color : Color.lerp(color, Colors.white, 0.05)!,
           color,
         ],
       ).createShader(rect);
@@ -300,7 +309,9 @@ class _WavePainter extends CustomPainter {
     final hairline = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2
-      ..color = Colors.white.withValues(alpha: 0.07);
+      ..color = isLight
+          ? Colors.black.withValues(alpha: 0.06)
+          : Colors.white.withValues(alpha: 0.07);
     canvas.drawPath(topEdge, hairline);
   }
 
