@@ -96,281 +96,270 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: ThemeConfig.backgroundLight,
-      body: CustomScrollView(
-        slivers: [
-          // ── Hero ────────────────────────────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 300,
-            pinned: true,
-            stretch: true,
-            backgroundColor: ThemeConfig.goldenYellow,
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            iconTheme: const IconThemeData(color: Colors.white),
-            title: const Text(
-              'My Profile',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                letterSpacing: 0.4,
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppResponsive.maxFormWidth,
               ),
-            ),
-            centerTitle: true,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  icon: Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.edit_outlined,
-                      color: Colors.white,
-                      size: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Floating hero card ──────────────────────────────────
+                  _buildHeroCard(initial, fullName, data),
+
+                  // ── Content ─────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Client ID badge
+                        if ((data['client_id'] ?? '').toString().isNotEmpty)
+                          _buildClientIdBadge(data['client_id'].toString()),
+
+                        const SizedBox(height: 20),
+
+                        // Quick-info chips: phone + city
+                        _buildQuickInfoRow(data),
+
+                        const SizedBox(height: 20),
+
+                        // Full contact card
+                        _buildContactCard(data),
+
+                        const SizedBox(height: 28),
+
+                        _SectionLabel(title: 'Account'),
+                        const SizedBox(height: 10),
+                        _buildGroupedList([
+                          _GroupItem(
+                            icon: Icons.person_outline_rounded,
+                            label: 'Personal Information',
+                            subtitle: 'View your complete details',
+                            color: const Color(0xFF3D5AFE),
+                            onTap: _openPersonalInformation,
+                          ),
+                          _GroupItem(
+                            icon: Icons.edit_outlined,
+                            label: 'Edit Profile',
+                            subtitle: 'Update your information',
+                            color: ThemeConfig.goldenYellow,
+                            onTap: _openEditProfile,
+                          ),
+                        ]),
+
+                        const SizedBox(height: 20),
+
+                        _SectionLabel(title: 'Session'),
+                        const SizedBox(height: 10),
+                        _buildGroupedList([
+                          _GroupItem(
+                            icon: Icons.logout_rounded,
+                            label: 'Logout',
+                            subtitle: 'Sign out of your account',
+                            color: ThemeConfig.errorColor,
+                            onTap: () => _handleLogout(context),
+                            isDestructive: true,
+                          ),
+                        ]),
+                      ],
                     ),
                   ),
-                  onPressed: _openEditProfile,
-                  tooltip: 'Edit Profile',
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.pin,
-              background: _buildHeroBackground(initial, fullName, data),
-            ),
-          ),
-
-          // ── Content ─────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppResponsive.maxFormWidth,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 48),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Client ID badge — normal layout, no tricks
-                      if ((data['client_id'] ?? '').toString().isNotEmpty)
-                        _buildClientIdBadge(data['client_id'].toString()),
-
-                      const SizedBox(height: 20),
-
-                      // Quick-info chips: phone + city
-                      _buildQuickInfoRow(data),
-
-                      const SizedBox(height: 20),
-
-                      // Full contact card
-                      _buildContactCard(data),
-
-                      const SizedBox(height: 28),
-
-                      _SectionLabel(title: 'Account'),
-                      const SizedBox(height: 10),
-                      _buildGroupedList([
-                        _GroupItem(
-                          icon: Icons.person_outline_rounded,
-                          label: 'Personal Information',
-                          subtitle: 'View your complete details',
-                          color: const Color(0xFF3D5AFE),
-                          onTap: _openPersonalInformation,
-                        ),
-                        _GroupItem(
-                          icon: Icons.edit_outlined,
-                          label: 'Edit Profile',
-                          subtitle: 'Update your information',
-                          color: ThemeConfig.goldenYellow,
-                          onTap: _openEditProfile,
-                        ),
-                      ]),
-
-                      const SizedBox(height: 20),
-
-                      _SectionLabel(title: 'Session'),
-                      const SizedBox(height: 10),
-                      _buildGroupedList([
-                        _GroupItem(
-                          icon: Icons.logout_rounded,
-                          label: 'Logout',
-                          subtitle: 'Sign out of your account',
-                          color: ThemeConfig.errorColor,
-                          onTap: () => _handleLogout(context),
-                          isDestructive: true,
-                        ),
-                      ]),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // ─── Hero background (no white curve — avoids overlap) ───────────────────────
+  // ─── Floating hero card (inset, all corners rounded) ─────────────────────────
 
-  Widget _buildHeroBackground(
+  Widget _buildHeroCard(
     String initial,
     String fullName,
     Map<String, dynamic> data,
   ) {
-    return ClipRect(
-      child: Stack(
-        children: [
-          // Gradient
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFFC107),
-                    ThemeConfig.goldenYellow,
-                    Color(0xFFD4890A),
-                  ],
-                  stops: [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFC107),
+            ThemeConfig.goldenYellow,
+            Color(0xFFD4890A),
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeConfig.goldenYellow.withValues(alpha: 0.40),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          children: [
+            // Decorative circles
+            Positioned(top: -25, right: -30, child: _softCircle(160, 0.10)),
+            Positioned(bottom: -30, left: -40, child: _softCircle(150, 0.08)),
+            Positioned(top: 50, right: 90, child: _softCircle(60, 0.07)),
 
-          // Decorative circles — kept within clip bounds
-          Positioned(
-            top: 0,
-            right: -30,
-            child: _softCircle(180, 0.08),
-          ),
-          Positioned(
-            bottom: 20,
-            left: -50,
-            child: _softCircle(180, 0.06),
-          ),
-          Positioned(
-            top: 60,
-            right: 100,
-            child: _softCircle(70, 0.06),
-          ),
-
-          // Avatar + name + email + badge — pinned to bottom of hero
-          Positioned.fill(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Avatar — triple ring
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 108,
-                      height: 108,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.22),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(6, 4, 6, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top bar: back / title / edit
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back,
+                            color: Colors.white),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        tooltip: 'Back',
                       ),
-                    ),
-                    Container(
-                      width: 98,
-                      height: 98,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      padding: const EdgeInsets.all(3),
-                      child: CircleAvatar(
-                        backgroundColor: const Color(0xFFFFF8E1),
+                      const Expanded(
                         child: Text(
-                          initial,
-                          style: const TextStyle(
-                            fontSize: 38,
+                          'My Profile',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            color: ThemeConfig.navyBlue,
+                            fontSize: 18,
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-
-                // Name
-                Text(
-                  fullName.isEmpty ? 'Client' : fullName,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.3,
-                    shadows: [
-                      Shadow(color: Color(0x33000000), blurRadius: 8),
+                      IconButton(
+                        icon: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.edit_outlined,
+                              color: Colors.white, size: 18),
+                        ),
+                        onPressed: _openEditProfile,
+                        tooltip: 'Edit Profile',
+                      ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 5),
+                  const SizedBox(height: 6),
 
-                // Email
-                Text(
-                  (data['email'] ?? '').toString(),
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: Colors.white.withValues(alpha: 0.88),
-                    letterSpacing: 0.2,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // "Active Client" pill
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                  // Avatar — triple ring
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Icon(
-                        Icons.verified_rounded,
-                        size: 12,
-                        color: Colors.white,
+                      Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.22),
+                        ),
                       ),
-                      SizedBox(width: 5),
-                      Text(
-                        'Active Client',
-                        style: TextStyle(
-                          fontSize: 11,
+                      Container(
+                        width: 94,
+                        height: 94,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
+                        ),
+                        padding: const EdgeInsets.all(3),
+                        child: CircleAvatar(
+                          backgroundColor: const Color(0xFFFFF8E1),
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: ThemeConfig.navyBlue,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: 14),
+
+                  // Name
+                  Text(
+                    fullName.isEmpty ? 'Client' : fullName,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.3,
+                      shadows: [
+                        Shadow(color: Color(0x33000000), blurRadius: 8),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  // Email
+                  Text(
+                    (data['email'] ?? '').toString(),
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // "Active Client" pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified_rounded,
+                            size: 12, color: Colors.white),
+                        SizedBox(width: 5),
+                        Text(
+                          'Active Client',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -6,8 +6,7 @@ import '../../../services/stripe_service.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common/wave_bottom_nav.dart';
 import '../../../widgets/dialog/login_required_dialog.dart';
-import '../../appointments/appointments_screen.dart';
-import '../../messages/send_message_screen.dart';
+import '../book_appointment/book_location_screen.dart';
 import 'dashboard_tab_screen.dart';
 import 'myfiles_tab_screen.dart';
 
@@ -211,17 +210,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       _openProtected(() => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const AppointmentsScreen(),
+                              builder: (_) => const BookLocationScreen(),
                             ),
                           ));
                       break;
                     case 3:
-                      _openProtected(() => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SendMessageScreen(),
-                            ),
-                          ));
+                      _openProtected(() =>
+                          Navigator.pushNamed(context, '/claude-chat-bot'));
                       break;
                     case 4:
                       _openProtected(
@@ -235,7 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   WaveNavItem(
                       icon: Icons.event_available_rounded, label: 'Appts'),
                   WaveNavItem(
-                      icon: Icons.chat_bubble_rounded, label: 'Messages'),
+                      icon: Icons.chat_bubble_rounded, label: 'Chat'),
                   WaveNavItem(icon: Icons.person_rounded, label: 'Profile'),
                 ],
               );
