@@ -646,9 +646,18 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
 
     return Scaffold(
-      body: SafeArea(
-        child: AbsorbPointer(
-          absorbing: _isBlocked,
+      backgroundColor: const Color(0xFF223344),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF223344), Color(0xFF101722)],
+          ),
+        ),
+        child: SafeArea(
+          child: AbsorbPointer(
+            absorbing: _isBlocked,
           child:
               isDesktop
                   // Web: same structure as DashboardTabScreen
@@ -713,6 +722,7 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                       ),
                     ),
                   ),
+          ),
         ),
       ),
     );

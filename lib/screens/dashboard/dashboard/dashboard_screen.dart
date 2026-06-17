@@ -4,7 +4,10 @@ import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/stripe_service.dart';
 import '../../../utils/responsive_utils.dart';
+import '../../../widgets/common/wave_bottom_nav.dart';
 import '../../../widgets/dialog/login_required_dialog.dart';
+import '../../appointments/appointments_screen.dart';
+import '../../messages/send_message_screen.dart';
 import 'dashboard_tab_screen.dart';
 import 'myfiles_tab_screen.dart';
 
@@ -171,72 +174,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _openProtected(VoidCallback action) {
+    if (AuthService.isAuthenticated) {
+      action();
+    } else {
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => LoginRequiredDialog(parentContext: context),
+      );
+    }
+  }
+
   Widget _buildBottomNav() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 70,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: const BoxDecoration(
-          color: Color(0xFF101722),
-          boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, -2)),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Container(
-            height: 55,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha:0.20),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: TabBar(
-              dividerColor: Colors.transparent,
-              indicator: BoxDecoration(
-                color: const Color(0xFFF9B000),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              indicatorPadding: const EdgeInsets.all(4),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              splashFactory: NoSplash.splashFactory,
-              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: const [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.home_outlined, size: 20),
-                      SizedBox(width: 6),
-                      Text("Home"),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder_outlined, size: 20),
-                      SizedBox(width: 6),
-                      Text("Files"),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    return Container(
+      color: const Color(0xFF101722),
+      child: Builder(
+        builder: (navContext) {
+          final controller = DefaultTabController.of(navContext);
+          return AnimatedBuilder(
+            animation: controller,
+            builder: (context, _) {
+              return WaveBottomNav(
+                // Only Home & Files are tabs; the rest open as full pages.
+                currentIndex: controller.index,
+                tabCount: 2,
+                onTap: (i) {
+                  switch (i) {
+                    case 0:
+                    case 1:
+                      controller.animateTo(i);
+                      break;
+                    case 2:
+                      _openProtected(() => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AppointmentsScreen(),
+                            ),
+                          ));
+                      break;
+                    case 3:
+                      _openProtected(() => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SendMessageScreen(),
+                            ),
+                          ));
+                      break;
+                    case 4:
+                      _openProtected(
+                          () => Navigator.pushNamed(context, '/profile'));
+                      break;
+                  }
+                },
+                items: const [
+                  WaveNavItem(icon: Icons.home_rounded, label: 'Home'),
+                  WaveNavItem(icon: Icons.folder_rounded, label: 'Files'),
+                  WaveNavItem(
+                      icon: Icons.event_available_rounded, label: 'Appts'),
+                  WaveNavItem(
+                      icon: Icons.chat_bubble_rounded, label: 'Messages'),
+                  WaveNavItem(icon: Icons.person_rounded, label: 'Profile'),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -325,9 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-            bottomNavigationBar: SafeArea(
-              child: _buildBottomNav(),
-            ),
+            bottomNavigationBar: _buildBottomNav(),
           );
         },
       ),
