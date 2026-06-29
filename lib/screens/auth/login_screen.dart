@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         builder: (context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AuthRadius.borderRadius,
             ),
             title: const Row(
               children: [
@@ -283,6 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScreenShell(
+      title: 'Sign in',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -416,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: ThemeConfig.successColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: AuthRadius.borderRadius,
                 border: Border.all(
                   color: ThemeConfig.successColor.withValues(alpha: 0.25),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../config/theme_config.dart';
 import '../../utils/app_loader.dart';
@@ -9,6 +10,11 @@ class AuthColors {
   static const border = Color(0xFFE2E8F0);
   static const hint = Color(0xFF94A3B8);
   static const body = Color(0xFF475569);
+}
+
+class AuthRadius {
+  static const double corner = 14;
+  static BorderRadius get borderRadius => BorderRadius.circular(corner);
 }
 
 InputDecoration authInputDecoration({
@@ -32,23 +38,23 @@ InputDecoration authInputDecoration({
     fillColor: AuthColors.surface,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AuthRadius.borderRadius,
       borderSide: const BorderSide(color: AuthColors.border),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AuthRadius.borderRadius,
       borderSide: const BorderSide(color: AuthColors.border),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AuthRadius.borderRadius,
       borderSide: const BorderSide(color: ThemeConfig.goldenYellow, width: 1.5),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AuthRadius.borderRadius,
       borderSide: const BorderSide(color: ThemeConfig.errorColor),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AuthRadius.borderRadius,
       borderSide: const BorderSide(color: ThemeConfig.errorColor, width: 1.5),
     ),
   );
@@ -56,20 +62,68 @@ InputDecoration authInputDecoration({
 
 class AuthScreenShell extends StatelessWidget {
   final Widget child;
+  final String title;
   final bool showBackButton;
 
   const AuthScreenShell({
     super.key,
     required this.child,
-    this.showBackButton = false,
+    required this.title,
+    this.showBackButton = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AuthColors.background,
-      body: SafeArea(
-        child: Stack(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: AuthColors.background,
+        extendBodyBehindAppBar: false,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          leading:
+              showBackButton
+                  ? IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Back',
+                  )
+                  : null,
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              letterSpacing: 0.2,
+            ),
+          ),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFFCA28), ThemeConfig.goldenYellow],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(AuthRadius.corner),
+              ),
+            ),
+          ),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(AuthRadius.corner),
+            ),
+          ),
+        ),
+        body: Stack(
           children: [
             Positioned(
               top: -80,
@@ -95,22 +149,15 @@ class AuthScreenShell extends StatelessWidget {
                 ),
               ),
             ),
-            if (showBackButton)
-              Positioned(
-                top: 8,
-                left: 4,
-                child: IconButton(
-                  onPressed: () => Navigator.maybePop(context),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  color: ThemeConfig.navyBlue,
-                ),
-              ),
-            Center(
+            SafeArea(
+              top: false,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: child,
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: child,
+                  ),
                 ),
               ),
             ),
@@ -141,7 +188,7 @@ class AuthHeader extends StatelessWidget {
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: AuthRadius.borderRadius,
             gradient: const LinearGradient(
               colors: [Color(0xFFFFCA28), ThemeConfig.goldenYellow],
               begin: Alignment.topLeft,
@@ -150,22 +197,22 @@ class AuthHeader extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: ThemeConfig.goldenYellow.withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Icon(icon, size: 34, color: ThemeConfig.navyBlue),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 20),
         Text(
           title,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: FontWeight.w800,
             color: ThemeConfig.navyBlue,
-            letterSpacing: -0.5,
+            letterSpacing: -0.4,
           ),
         ),
         const SizedBox(height: 8),
@@ -195,13 +242,13 @@ class AuthFormCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       decoration: BoxDecoration(
         color: AuthColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AuthRadius.borderRadius,
         border: Border.all(color: AuthColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -235,24 +282,23 @@ class AuthPrimaryButton extends StatelessWidget {
           disabledBackgroundColor:
               ThemeConfig.goldenYellow.withValues(alpha: 0.6),
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AuthRadius.borderRadius),
         ),
-        child: isLoading
-            ? const SizedBox(
-                height: 22,
-                width: 22,
-                child: AppLoader(size: 22),
-              )
-            : Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: ThemeConfig.navyBlue,
+        child:
+            isLoading
+                ? const SizedBox(
+                  height: 22,
+                  width: 22,
+                  child: AppLoader(size: 22),
+                )
+                : Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: ThemeConfig.navyBlue,
+                  ),
                 ),
-              ),
       ),
     );
   }

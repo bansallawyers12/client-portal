@@ -599,6 +599,97 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
   }
 
+  Widget _buildGuestPrompt() {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            ThemeConfig.navyBlue.withValues(alpha: 0.04),
+            ThemeConfig.goldenYellow.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: ThemeConfig.goldenYellow.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.lock_open_rounded,
+              color: ThemeConfig.goldenYellow,
+              size: 28,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Sign in to access your files',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: ThemeConfig.navyBlue,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'View workflow progress, upload documents, pay invoices, and message your consultant.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.45,
+              color: ThemeConfig.navyBlue.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ThemeConfig.goldenYellow,
+                foregroundColor: ThemeConfig.navyBlue,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                'Sign in',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/register');
+            },
+            child: const Text(
+              'Create free account',
+              style: TextStyle(
+                color: ThemeConfig.goldenYellow,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -684,6 +775,8 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                                   children: [
                                     _buildActionRequiredBanner(),
                                     quickActionsCard,
+                                    if (!AuthService.isAuthenticated)
+                                      _buildGuestPrompt(),
                                     const SizedBox(height: 24),
                                   ],
                                 ),
@@ -713,6 +806,8 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                                 children: [
                                   _buildActionRequiredBanner(),
                                   quickActionsCard,
+                                  if (!AuthService.isAuthenticated)
+                                    _buildGuestPrompt(),
                                   const SizedBox(height: 24),
                                 ],
                               ),
