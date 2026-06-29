@@ -31,4 +31,17 @@ class Blog {
       featured: json['featured'] ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'image': image,
+      'author': author,
+      'date': date,
+      'url': url,
+      'featured': featured,
+    };
+  }
 }

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../config/theme_config.dart';
 import '../../models/new/allowed_checklist.dart';
 import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 import '../../utils/app_loader.dart';
 import '../../utils/responsive_utils.dart';
 
@@ -77,13 +78,21 @@ class _BulkUploadDocumentScreenState extends State<BulkUploadDocumentScreen>
     super.dispose();
   }
 
+  int get _clientMatterId =>
+      (widget.matterID != null && widget.matterID! > 0)
+          ? widget.matterID!
+          : (AuthService.selectedMatterId ?? 0);
+
+  int? get _stageId =>
+      widget.stageId != null && widget.stageId! > 0 ? widget.stageId : null;
+
   Future<void> _loadChecklists() async {
     setState(() => _isLoading = true);
 
     try {
       final res = await ApiService.getWorkflowAllowedChecklist(
-        clientMatterId: widget.matterID ?? 0,
-        stageId: widget.stageId,
+        clientMatterId: _clientMatterId,
+        stageId: _stageId,
         allowedChecklistID: widget.allowedCheckListId,
       );
 
@@ -298,7 +307,7 @@ class _BulkUploadDocumentScreenState extends State<BulkUploadDocumentScreen>
       final res = await ApiService.bulkUploadChecklistDocuments(
         filesData: filesData,
         allowedChecklistIds: ids,
-        clientMatterId: widget.matterID ?? 0,
+        clientMatterId: _clientMatterId,
       );
 
       if (res['success'] == true) {

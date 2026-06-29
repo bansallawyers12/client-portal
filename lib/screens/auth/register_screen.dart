@@ -1,10 +1,9 @@
-import 'package:client/utils/app_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../config/theme_config.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/common/error_widget.dart';
+import '../../widgets/auth/auth_ui.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,21 +19,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController =
-      TextEditingController(); // Added password controller
+  final _passwordController = TextEditingController();
 
-  String _gender = "Male";
-  String _maritalStatus = "Single";
-  String _countryCode = "+61";
+  String _gender = 'Male';
+  String _maritalStatus = 'Single';
+  String _countryCode = '+61';
 
   DateTime? _dob;
-
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   String? _errorMessage;
   String? _successMessage;
 
-  /// Show error dialog whenever there is an error
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   void _showErrorDialog(String message) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showDialog(
@@ -42,20 +49,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
         builder: (context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
             title: const Row(
               children: [
-                Icon(Icons.error, color: Colors.red),
+                Icon(Icons.error_outline_rounded, color: Colors.red),
                 SizedBox(width: 8),
-                Text("Error"),
+                Text('Registration failed'),
               ],
             ),
             content: Text(message),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
+                child: const Text('OK'),
               ),
             ],
           );
@@ -73,9 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (picked != null) {
-      setState(() {
-        _dob = picked;
-      });
+      setState(() => _dob = picked);
     }
   }
 
@@ -83,17 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_dob == null) {
-      setState(() {
-        _errorMessage = "Please select date of birth";
-      });
-      _showErrorDialog(_errorMessage!);
-      return;
-    }
-
-    if (_passwordController.text.isEmpty) {
-      setState(() {
-        _errorMessage = "Please enter a password";
-      });
+      _errorMessage = 'Please select date of birth';
       _showErrorDialog(_errorMessage!);
       return;
     }
@@ -117,330 +112,308 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text.trim(),
       );
 
-      if (result["success"]) {
+      if (result['success']) {
         setState(() {
-          _successMessage = result["message"];
+          _successMessage = result['message'];
         });
 
+        if (!mounted) return;
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
-              title: const Text("Success"),
-              content: Text(result["message"] ?? "Registration successful"),
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: ThemeConfig.successColor,
+                  ),
+                  SizedBox(width: 8),
+                  Text('Account created'),
+                ],
+              ),
+              content: Text(result['message'] ?? 'Registration successful'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                     Navigator.pushReplacementNamed(context, '/login');
                   },
-                  child: const Text("OK"),
+                  child: const Text('Sign in'),
                 ),
               ],
             );
           },
         );
       } else {
-        setState(() {
-          _errorMessage = result["message"] ?? "Registration failed";
-        });
+        _errorMessage = result['message'] ?? 'Registration failed';
         _showErrorDialog(_errorMessage!);
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Unexpected error: ${e.toString()}";
-      });
+      _errorMessage = 'Unexpected error: ${e.toString()}';
       _showErrorDialog(_errorMessage!);
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: ThemeConfig.navyBlue.withValues(alpha: 0.45),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+    return AuthScreenShell(
+      showBackButton: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AuthHeader(
+            icon: Icons.person_add_rounded,
+            title: 'Create account',
+            subtitle: 'Join the Bansal Immigration client portal',
+          ),
+          const SizedBox(height: 28),
+          AuthFormCard(
+            child: Form(
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Column(
+                  _sectionLabel('PERSONAL DETAILS'),
+                  Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: ThemeConfig.goldenYellow,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          Icons.person_add,
-                          size: 40,
-                          color: ThemeConfig.navyBlue,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        "Create Account",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstNameController,
+                          textInputAction: TextInputAction.next,
+                          decoration: authInputDecoration(
+                            label: 'First name',
+                            prefixIcon: Icon(
+                              Icons.person_outline_rounded,
+                              color: ThemeConfig.navyBlue.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty ? 'Required' : null,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Register for the client portal",
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastNameController,
+                          textInputAction: TextInputAction.next,
+                          decoration: authInputDecoration(label: 'Last name'),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty ? 'Required' : null,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 40),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _firstNameController,
-                          decoration: InputDecoration(
-                            labelText: "First Name",
-                            prefixIcon: const Icon(Icons.person),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          validator:
-                              (v) => v!.isEmpty ? "Enter first name" : null,
-                        ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _lastNameController,
-                          decoration: InputDecoration(
-                            labelText: "Last Name",
-                            prefixIcon: const Icon(Icons.person_outline),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          validator:
-                              (v) => v!.isEmpty ? "Enter last name" : null,
-                        ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: "Email",
-                            prefixIcon: const Icon(Icons.email),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          validator: (v) => v!.isEmpty ? "Enter email" : null,
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 90,
-                              child: TextFormField(
-                                initialValue: _countryCode,
-                                decoration: InputDecoration(
-                                  labelText: "Code",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                ),
-                                onChanged: (v) {
-                                  _countryCode = v;
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _phoneController,
-                                decoration: InputDecoration(
-                                  labelText: "Phone",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                ),
-                                validator:
-                                    (v) => v!.isEmpty ? "Enter phone" : null,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        TextFormField(
-                          controller: _passwordController, // Password field
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            prefixIcon: const Icon(Icons.lock),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          validator:
-                              (v) => v!.isEmpty ? "Enter password" : null,
-                        ),
-                        const SizedBox(height: 20),
-                        DropdownButtonFormField(
-                          initialValue: _gender,
-                          decoration: InputDecoration(
-                            labelText: "Gender",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: "Male",
-                              child: Text("Male"),
-                            ),
-                            DropdownMenuItem(
-                              value: "Female",
-                              child: Text("Female"),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            setState(() {
-                              _gender = v!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        DropdownButtonFormField(
-                          initialValue: _maritalStatus,
-                          decoration: InputDecoration(
-                            labelText: "Marital Status",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey.shade100,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: "Single",
-                              child: Text("Single"),
-                            ),
-                            DropdownMenuItem(
-                              value: "Married",
-                              child: Text("Married"),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            setState(() {
-                              _maritalStatus = v!;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        InkWell(
-                          onTap: _selectDob,
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: "Date of Birth",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                            ),
-                            child: Text(
-                              _dob == null
-                                  ? "Select Date"
-                                  : DateFormat("dd/MM/yyyy").format(_dob!),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ThemeConfig.goldenYellow,
-                            foregroundColor: ThemeConfig.navyBlue,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child:
-                              _isLoading
-                                  ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: AppLoader(),
-                                  )
-                                  : const Text(
-                                    "Create Account",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                        ),
-                      ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    decoration: authInputDecoration(
+                      label: 'Email address',
+                      hint: 'you@example.com',
+                      prefixIcon: Icon(
+                        Icons.mail_outline_rounded,
+                        color: ThemeConfig.navyBlue.withValues(alpha: 0.55),
+                      ),
                     ),
+                    validator:
+                        (v) => v == null || v.isEmpty ? 'Enter email' : null,
                   ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 20),
-                    CustomErrorWidget(message: _errorMessage!),
-                  ],
-                  if (_successMessage != null) ...[
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: ThemeConfig.goldenYellow.withValues(alpha:0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: ThemeConfig.goldenYellow.withValues(alpha:0.3),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 88,
+                        child: TextFormField(
+                          initialValue: _countryCode,
+                          decoration: authInputDecoration(label: 'Code'),
+                          onChanged: (v) => _countryCode = v,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.next,
+                          decoration: authInputDecoration(
+                            label: 'Phone number',
+                            hint: '400 000 000',
+                            prefixIcon: Icon(
+                              Icons.phone_outlined,
+                              color: ThemeConfig.navyBlue.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          validator:
+                              (v) =>
+                                  v == null || v.isEmpty ? 'Enter phone' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _sectionLabel('ACCOUNT & PROFILE'),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
+                    textInputAction: TextInputAction.next,
+                    decoration: authInputDecoration(
+                      label: 'Password',
+                      hint: 'At least 6 characters',
+                      prefixIcon: Icon(
+                        Icons.lock_outline_rounded,
+                        color: ThemeConfig.navyBlue.withValues(alpha: 0.55),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: AuthColors.hint,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
+                    ),
+                    validator:
+                        (v) => v == null || v.isEmpty ? 'Enter password' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _gender,
+                          decoration: authInputDecoration(label: 'Gender'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Male',
+                              child: Text('Male'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Female',
+                              child: Text('Female'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setState(() => _gender = v);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _maritalStatus,
+                          decoration: authInputDecoration(label: 'Status'),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Single',
+                              child: Text('Single'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Married',
+                              child: Text('Married'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setState(() => _maritalStatus = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: _selectDob,
+                    borderRadius: BorderRadius.circular(14),
+                    child: InputDecorator(
+                      decoration: authInputDecoration(
+                        label: 'Date of birth',
+                        prefixIcon: Icon(
+                          Icons.calendar_today_rounded,
+                          size: 20,
+                          color: ThemeConfig.navyBlue.withValues(alpha: 0.55),
                         ),
                       ),
                       child: Text(
-                        _successMessage!,
+                        _dob == null
+                            ? 'Select date'
+                            : DateFormat('dd MMM yyyy').format(_dob!),
                         style: TextStyle(
-                          color: ThemeConfig.goldenYellow,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                          color:
+                              _dob == null
+                                  ? AuthColors.hint
+                                  : ThemeConfig.navyBlue,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ],
+                  ),
+                  const SizedBox(height: 24),
+                  AuthPrimaryButton(
+                    label: 'Create account',
+                    isLoading: _isLoading,
+                    onPressed: _register,
+                  ),
                 ],
               ),
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+          AuthFooterLink(
+            prompt: 'Already have an account?',
+            actionLabel: 'Sign in',
+            onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+          ),
+          if (_successMessage != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: ThemeConfig.successColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: ThemeConfig.successColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Text(
+                _successMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: ThemeConfig.successColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

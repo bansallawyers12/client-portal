@@ -420,8 +420,8 @@ class MyAppWithTheme extends StatelessWidget {
                       as Map<String, dynamic>?;
 
               return BulkUploadDocumentScreen(
-                matterID: args?['matter_id'] ?? 0,
-                stageId: args?['stageId'] ?? 0,
+                matterID: args?['matter_id'] ?? AuthService.selectedMatterId,
+                stageId: args?['stageId'],
                 allowedCheckListId: args?['allowedChecklistId'],
               );
             },

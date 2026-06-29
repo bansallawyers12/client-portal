@@ -16,6 +16,7 @@ import '../../../services/api_service.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common/error_widget.dart';
 import '../../../widgets/common/pressable_scale.dart';
@@ -57,6 +58,11 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
   static const Color _bgBottom = Color(0xFFF5F7FA);
   static const Color _heading = Color(0xFF1F2937); // dark slate text
   static const Color _subtle = Color(0xFF64748B); // slate-grey text
+
+  static const String _blogsCacheKey = 'dashboard_blogs_v1';
+
+  String get _dashboardCacheKey =>
+      'dashboard_home_v1_${widget.matterId ?? 'guest'}';
 
   @override
   void initState() {
@@ -120,19 +126,73 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     }
   }
 
-  Future<void> _loadRecentBlogs() async {
-    setState(() => _isLoadingBlogs = true);
+  Future<void> _loadRecentBlogs({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      final cached = await CacheHelper.loadEnvelope(_blogsCacheKey);
+      if (cached is List && cached.isNotEmpty) {
+        _blogs = cached
+            .map((e) => Blog.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        if (mounted) {
+          setState(() => _isLoadingBlogs = false);
+          _setupBlogCarousel();
+        }
+      }
+    }
+
+    final showBlogLoader = _blogs.isEmpty;
+    if (showBlogLoader && mounted) {
+      setState(() => _isLoadingBlogs = true);
+    }
 
     try {
-      final response = await ApiServiceBansalImmigration.getBlogs(page: 1, perPage: 5);
+      final response =
+          await ApiServiceBansalImmigration.getBlogs(page: 1, perPage: 5);
       if (response['success'] == true) {
         final List list = response['data'];
-        _blogs = list.map((e) => Blog.fromJson(e)).toList();
+        final blogs = list.map((e) => Blog.fromJson(e)).toList();
+        await CacheHelper.saveEnvelope(
+          key: _blogsCacheKey,
+          data: blogs.map((e) => e.toJson()).toList(),
+        );
+        if (!mounted) return;
+        setState(() => _blogs = blogs);
+        _setupBlogCarousel();
       }
     } catch (_) {}
 
-    setState(() => _isLoadingBlogs = false);
-    _setupBlogCarousel();
+    if (mounted) {
+      setState(() => _isLoadingBlogs = false);
+    }
+  }
+
+  void _applyDashboardData(Map<String, dynamic> data) {
+    CaseSummary? caseSummary;
+    if (data['case_summary'] != null) {
+      caseSummary = CaseSummary.fromJson(
+        Map<String, dynamic>.from(data['case_summary']),
+      );
+    }
+
+    final dashboardSummary = DashboardSummary(
+      activeCases: data['active_cases'] ?? 0,
+      totalDocuments: data['total_documents'] ?? 0,
+      totalAppointments: data['total_appointments'] ?? 0,
+    );
+
+    List<RecentActivity> recentActivity = [];
+    if (data['recent_activity'] != null && data['recent_activity'] is List) {
+      recentActivity =
+          (data['recent_activity'] as List)
+              .map(
+                (e) => RecentActivity.fromJson(Map<String, dynamic>.from(e)),
+              )
+              .toList();
+    }
+
+    _dashboardSummary = dashboardSummary;
+    _caseSummary = caseSummary;
+    _recentActivity = recentActivity;
   }
 
   void _setupBlogCarousel() {
@@ -165,7 +225,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     super.dispose();
   }
 
-  Future<void> _loadDashboardData() async {
+  Future<void> _loadDashboardData({bool forceRefresh = false}) async {
     if (widget.matterId == null) {
       setState(() {
         _isLoading = false;
@@ -174,10 +234,26 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (!forceRefresh) {
+      final cached = await CacheHelper.loadEnvelope(_dashboardCacheKey);
+      if (cached is Map) {
+        _applyDashboardData(Map<String, dynamic>.from(cached));
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
+        }
+      }
+    }
+
+    final showBlockingLoader = _dashboardSummary == null;
+    if (showBlockingLoader && mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final result = await ApiService.getDashboard(
@@ -185,48 +261,28 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
       );
 
       if (result['success'] == true) {
-        final data = result['data'];
-
-        CaseSummary? caseSummary;
-        if (data['case_summary'] != null) {
-          caseSummary = CaseSummary.fromJson(data['case_summary']);
+        final data = Map<String, dynamic>.from(result['data']);
+        _applyDashboardData(data);
+        await CacheHelper.saveEnvelope(key: _dashboardCacheKey, data: data);
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = null;
+          });
         }
-
-        DashboardSummary dashboardSummary = DashboardSummary(
-          activeCases: data['active_cases'] ?? 0,
-          totalDocuments: data['total_documents'] ?? 0,
-          totalAppointments: data['total_appointments'] ?? 0,
-        );
-
-        List<RecentActivity> recentActivity = [];
-        if (data['recent_activity'] != null &&
-            data['recent_activity'] is List) {
-          recentActivity =
-              (data['recent_activity'] as List)
-                  .map(
-                    (e) =>
-                        RecentActivity.fromJson(Map<String, dynamic>.from(e)),
-                  )
-                  .toList();
-        }
-
-        setState(() {
-          _dashboardSummary = dashboardSummary;
-          _caseSummary = caseSummary;
-          _recentActivity = recentActivity;
-          _isLoading = false;
-        });
-      } else {
+      } else if (showBlockingLoader && mounted) {
         setState(() {
           _isLoading = false;
           _errorMessage = result['message'] ?? 'Failed to load dashboard';
         });
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Error: ${e.toString()}';
-      });
+      if (showBlockingLoader && mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Error: ${e.toString()}';
+        });
+      }
     }
   }
 
@@ -254,8 +310,8 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
                 : RefreshIndicator(
                   onRefresh: () async {
                     await Future.wait([
-                      _loadDashboardData(),
-                      _loadRecentBlogs(),
+                      _loadDashboardData(forceRefresh: true),
+                      _loadRecentBlogs(forceRefresh: true),
                     ]);
                   },
                   child: SingleChildScrollView(

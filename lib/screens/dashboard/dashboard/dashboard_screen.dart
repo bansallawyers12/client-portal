@@ -4,7 +4,7 @@ import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/stripe_service.dart';
 import '../../../utils/responsive_utils.dart';
-import '../../../widgets/common/wave_bottom_nav.dart';
+import '../../../config/theme_config.dart';
 import '../../../widgets/dialog/login_required_dialog.dart';
 import '../book_appointment/book_location_screen.dart';
 import 'dashboard_tab_screen.dart';
@@ -186,58 +186,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      color: Colors.white,
-      child: Builder(
-        builder: (navContext) {
-          final controller = DefaultTabController.of(navContext);
-          return AnimatedBuilder(
-            animation: controller,
-            builder: (context, _) {
-              return WaveBottomNav(
-                // Only Home & Files are tabs; the rest open as full pages.
-                currentIndex: controller.index,
-                tabCount: 2,
-                barColor: Colors.white,
-                unselectedColor: const Color(0xFF94A3B8),
-                onTap: (i) {
-                  switch (i) {
-                    case 0:
-                    case 1:
-                      controller.animateTo(i);
-                      break;
-                    case 2:
-                      _openProtected(() => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const BookLocationScreen(),
-                            ),
-                          ));
-                      break;
-                    case 3:
-                      _openProtected(() =>
-                          Navigator.pushNamed(context, '/claude-chat-bot'));
-                      break;
-                    case 4:
-                      _openProtected(
-                          () => Navigator.pushNamed(context, '/profile'));
-                      break;
-                  }
-                },
-                items: const [
-                  WaveNavItem(icon: Icons.home_rounded, label: 'Home'),
-                  WaveNavItem(icon: Icons.folder_rounded, label: 'Files'),
-                  WaveNavItem(
-                      icon: Icons.event_available_rounded, label: 'Appts'),
-                  WaveNavItem(
-                      icon: Icons.chat_bubble_rounded, label: 'Chat'),
-                  WaveNavItem(icon: Icons.person_rounded, label: 'Profile'),
-                ],
-              );
-            },
-          );
-        },
-      ),
+    return Builder(
+      builder: (navContext) {
+        final controller = DefaultTabController.of(navContext);
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) {
+            return BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: controller.index,
+              backgroundColor: Colors.white,
+              elevation: 8,
+              selectedItemColor: ThemeConfig.goldenYellow,
+              unselectedItemColor: const Color(0xFF94A3B8),
+              selectedFontSize: 11,
+              unselectedFontSize: 11,
+              onTap: (i) {
+                switch (i) {
+                  case 0:
+                  case 1:
+                    controller.index = i;
+                    break;
+                  case 2:
+                    _openProtected(() => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BookLocationScreen(),
+                          ),
+                        ));
+                    break;
+                  case 3:
+                    _openProtected(
+                        () => Navigator.pushNamed(context, '/claude-chat-bot'));
+                    break;
+                  case 4:
+                    _openProtected(
+                        () => Navigator.pushNamed(context, '/profile'));
+                    break;
+                }
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.folder_outlined),
+                  activeIcon: Icon(Icons.folder_rounded),
+                  label: 'Files',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.event_available_outlined),
+                  activeIcon: Icon(Icons.event_available_rounded),
+                  label: 'Appts',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.chat_bubble_outline_rounded),
+                  activeIcon: Icon(Icons.chat_bubble_rounded),
+                  label: 'Chat',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline_rounded),
+                  activeIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

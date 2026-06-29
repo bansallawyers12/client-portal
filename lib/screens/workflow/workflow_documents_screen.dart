@@ -143,7 +143,13 @@ class _WorkflowDocumentsScreenState extends State<WorkflowDocumentsScreen> {
             backgroundColor: ThemeConfig.goldenYellow,
             elevation: 6,
             onPressed: () {
-              Navigator.pushNamed(context, '/bulk-upload-documents');
+              Navigator.pushNamed(
+                context,
+                '/bulk-upload-documents',
+                arguments: {
+                  'matter_id': AuthService.selectedMatterId,
+                },
+              );
             },
             icon: const Icon(Icons.upload_file, color: Colors.white),
             label: const Text(

@@ -445,6 +445,9 @@ class ApiService {
     required List<int> allowedChecklistIds,
     required int clientMatterId,
   }) async {
+    final headers = _buildHeaders();
+    headers.remove('Content-Type');
+
     final request = http.MultipartRequest(
       'POST',
       Uri.parse(
@@ -454,9 +457,7 @@ class ApiService {
       ),
     );
 
-    request.headers.addAll(_buildHeaders());
-    request.headers.remove('Content-Type');
-
+    request.headers.addAll(headers);
     request.fields['client_matter_id'] = clientMatterId.toString();
     request.fields['allowed_checklist_ids'] = allowedChecklistIds.join(',');
 
@@ -470,9 +471,13 @@ class ApiService {
       );
     }
 
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    return jsonDecode(response.body);
+    try {
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      return _handleResponse(response);
+    } catch (e) {
+      throw Exception('Bulk upload failed: ${e.toString()}');
+    }
   }
 
   static Future<Map<String, dynamic>> getClientCases({
