@@ -17,6 +17,15 @@ class AuthRadius {
   static BorderRadius get borderRadius => BorderRadius.circular(corner);
 }
 
+void authNavigateBack(BuildContext context) {
+  final navigator = Navigator.of(context);
+  if (navigator.canPop()) {
+    navigator.pop();
+  } else {
+    navigator.pushReplacementNamed('/home');
+  }
+}
+
 InputDecoration authInputDecoration({
   required String label,
   String? hint,
@@ -76,26 +85,31 @@ class AuthScreenShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AuthColors.background,
-        extendBodyBehindAppBar: false,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          centerTitle: true,
-          automaticallyImplyLeading: false,
-          leading:
-              showBackButton
-                  ? IconButton(
-                    onPressed: () => Navigator.maybePop(context),
-                    icon: const Icon(
-                      Icons.arrow_back_rounded,
-                      color: Colors.white,
-                    ),
-                    tooltip: 'Back',
-                  )
-                  : null,
+      child: PopScope(
+        canPop: Navigator.of(context).canPop(),
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) authNavigateBack(context);
+        },
+        child: Scaffold(
+          backgroundColor: AuthColors.background,
+          extendBodyBehindAppBar: false,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: true,
+            automaticallyImplyLeading: false,
+            leading:
+                showBackButton
+                    ? IconButton(
+                      onPressed: () => authNavigateBack(context),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
+                      tooltip: 'Back',
+                    )
+                    : null,
           title: Text(
             title,
             style: const TextStyle(
@@ -163,6 +177,7 @@ class AuthScreenShell extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

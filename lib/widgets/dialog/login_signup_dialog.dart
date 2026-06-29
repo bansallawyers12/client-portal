@@ -89,7 +89,7 @@ class LoginSignupDialog extends StatelessWidget {
                     ),
                     onPressed: () {
                       Navigator.of(parentContext).pop();
-                      Navigator.pushNamed(context, '/login');
+                      Navigator.pushNamed(parentContext, '/login');
                     },
                     child: const Text("Login"),
                   ),
@@ -107,7 +107,7 @@ class LoginSignupDialog extends StatelessWidget {
                     ),
                     onPressed: () {
                       Navigator.of(parentContext).pop();
-                      Navigator.pushNamed(context, '/register');
+                      Navigator.pushNamed(parentContext, '/register');
                     },
                     child: const Text("Sign Up"),
                   ),

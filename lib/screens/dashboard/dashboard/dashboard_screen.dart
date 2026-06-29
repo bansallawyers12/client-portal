@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/stripe_service.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../config/theme_config.dart';
+import '../../../widgets/dialog/exit_app_dialog.dart';
 import '../../../widgets/dialog/login_required_dialog.dart';
 import '../book_appointment/book_location_screen.dart';
 import 'dashboard_tab_screen.dart';
@@ -263,7 +265,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final isDesktop = AppResponsive.isDesktop(context);
 
-    return DefaultTabController(
+    return PopScope(
+      canPop: Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldExit = await ExitAppDialog.show(context);
+        if (shouldExit && context.mounted) {
+          SystemNavigator.pop();
+        }
+      },
+      child: DefaultTabController(
       length: 2,
       child: Builder(
         builder: (tabContext) {
@@ -347,6 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         },
       ),
+    ),
     );
   }
 }

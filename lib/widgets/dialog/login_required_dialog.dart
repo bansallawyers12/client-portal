@@ -169,11 +169,7 @@ class LoginRequiredDialog extends StatelessWidget {
                         ),
                         onPressed: () {
                           Navigator.of(parentContext).pop();
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/login',
-                            (route) => false,
-                          );
+                          Navigator.pushNamed(parentContext, '/login');
                         },
                         icon: const Icon(Icons.login_rounded, size: 20),
                         label: const Text(
@@ -200,7 +196,7 @@ class LoginRequiredDialog extends StatelessWidget {
                         ),
                         onPressed: () {
                           Navigator.of(parentContext).pop();
-                          Navigator.pushNamed(context, '/register');
+                          Navigator.pushNamed(parentContext, '/register');
                         },
                         child: const Text(
                           'Create free account',
