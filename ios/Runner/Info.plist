@@ -42,7 +42,9 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need access to your location to provide location-based services.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for audio recording features.</string>
+	<string>We need access to your microphone for voice messages in the chatbot.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need speech recognition to convert your voice into text in the chatbot.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We need permission to save photos to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

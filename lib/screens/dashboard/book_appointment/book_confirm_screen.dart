@@ -320,10 +320,21 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                 decoration: InputDecoration(
                   labelText: 'Details of Enquiry',
                   filled: true,
-                  fillColor: const Color(0xFFFFF1F1),
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.redAccent),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1E3A8A),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -364,37 +375,11 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
 
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Center(
-                      child: SizedBox(
-                        width: 220,
-                        height: 48,
-                        child: ElevatedButton(
-                          onPressed:
-                              isLoading || isSubmitting
-                                  ? null
-                                  : _submitAppointment,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1F3C88),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          child:
-                              isSubmitting
-                                  ? const AppLoader()
-                                  : Text(
-                                    isAdd
-                                        ? 'Review & Confirm'
-                                        : 'Update Appointment',
-                                  ),
-                        ),
-                      ),
+                    child: NextButton(
+                      label: isAdd ? 'Review & Confirm' : 'Update Appointment',
+                      isLoading: isSubmitting,
+                      onTap:
+                          isLoading || isSubmitting ? null : _submitAppointment,
                     ),
                   ),
                 ],
@@ -424,17 +409,38 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           enabled: enabled,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFFFF1F1),
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.redAccent),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: Color(0xFF1E3A8A),
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -456,16 +462,20 @@ class PhoneField extends StatelessWidget {
       children: [
         const Text(
           'Phone Number',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF374151),
+          ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
           children: [
             Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: const Center(child: Text('🇦🇺 +61')),
@@ -479,9 +489,25 @@ class PhoneField extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: '000 000 000',
                   filled: true,
-                  fillColor: const Color(0xFFFFF1F1),
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1E3A8A),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -500,16 +526,30 @@ class TimezoneBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
           colors: [Color(0xFF6D83F2), Color(0xFF7B4AA1)],
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6D83F2).withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: const Text(
-        '⏱  All times shown in Melbourne Time (AEST)',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.access_time_rounded, color: Colors.white, size: 18),
+          SizedBox(width: 8),
+          Text(
+            'All times shown in Melbourne Time (AEST)',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -684,19 +724,38 @@ class _CalendarSectionState extends State<CalendarSection> {
                 widget.onTimeSelected?.call(slot);
               }
                   : null,
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.grey.shade300
-                      : const Color(0xFF1E3A8A),
-                  borderRadius: BorderRadius.circular(12),
+                  color:
+                      isSelected
+                          ? const Color(0xFF1E3A8A)
+                          : Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? const Color(0xFF1E3A8A)
+                            : Colors.grey.shade300,
+                  ),
+                  boxShadow:
+                      isSelected
+                          ? [
+                            BoxShadow(
+                              color: const Color(0xFF1E3A8A).withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                          : null,
                 ),
                 child: Text(
                   slot,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.black : Colors.white,
+                    fontSize: 13,
+                    color: isSelected ? Colors.white : const Color(0xFF1E3A8A),
                   ),
                 ),
               ),

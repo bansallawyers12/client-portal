@@ -161,21 +161,21 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
       activeStep: 1,
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.only(right: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
             ),
             child: TextButton.icon(
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 14,
                   vertical: 8,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
               onPressed: () {
@@ -215,10 +215,7 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Select Office Location',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    const SectionTitle('Select Office Location'),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 16,
@@ -243,10 +240,7 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
                               .toList(),
                     ),
                     const SizedBox(height: 32),
-                    const Text(
-                      'Meeting Type',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    const SectionTitle('Meeting Type'),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 16,
@@ -272,10 +266,7 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
                               .toList(),
                     ),
                     const SizedBox(height: 32),
-                    const Text(
-                      'Preferred Language',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    const SectionTitle('Preferred Language'),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 16,

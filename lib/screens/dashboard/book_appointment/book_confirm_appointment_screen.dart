@@ -9,13 +9,13 @@ import 'package:pay/pay.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/stripe_config.dart';
-import '../../../config/theme_config.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/stripe_service.dart';
 import '../../../utils/payment_config.dart';
 import '../../../utils/responsive_utils.dart';
 import 'book_appointment_success_screen.dart';
+import 'booking_widget.dart';
 
 class BookConfirmAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic> selectedOptions;
@@ -398,23 +398,40 @@ class _BookConfirmAppointmentScreenState
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _detailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+            ),
+          ),
           Expanded(
             flex: 3,
             child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1F2937),
+                fontSize: 14,
+              ),
             ),
           ),
-          Expanded(flex: 5, child: Text(value)),
         ],
       ),
     );
   }
+
+  Widget _divider() => Divider(height: 1, color: Colors.grey.shade200);
 
   @override
   Widget build(BuildContext context) {
@@ -422,38 +439,60 @@ class _BookConfirmAppointmentScreenState
     final price = opts['service_price'] ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Confirm Your Appointment',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: ThemeConfig.goldenYellow,
-        foregroundColor: Colors.white,
-      ),
+      backgroundColor: const Color(0xFFF0F2F5),
+      appBar: const BookingAppBar(title: 'Confirm Your Appointment'),
       body: SafeArea(
+        top: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: AppResponsive.maxContentWidth,
             ),
             child: SingleChildScrollView(
-              padding: AppResponsive.pagePadding(context),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _row('Full Name', opts['full_name'] ?? '-'),
-                  _row('Email', opts['email'] ?? '-'),
-                  _row('Phone', opts['phone'] ?? '-'),
-                  _row('Location', opts['location_name'] ?? '-'),
-                  _row('Meeting Type', opts['meeting_type'] ?? '-'),
-                  _row('Service', opts['service_name'] ?? '-'),
-                  _row(
-                    'Date & Time',
-                    '${opts['appoint_date']} at ${opts['appoint_time']}',
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _detailRow('Full Name', opts['full_name'] ?? '-'),
+                        _divider(),
+                        _detailRow('Email', opts['email'] ?? '-'),
+                        _divider(),
+                        _detailRow('Phone', opts['phone'] ?? '-'),
+                        _divider(),
+                        _detailRow('Location', opts['location_name'] ?? '-'),
+                        _divider(),
+                        _detailRow('Meeting Type', opts['meeting_type'] ?? '-'),
+                        _divider(),
+                        _detailRow('Service', opts['service_name'] ?? '-'),
+                        _divider(),
+                        _detailRow(
+                          'Date & Time',
+                          '${opts['appoint_date']} at ${opts['appoint_time']}',
+                        ),
+                        _divider(),
+                        _detailRow(
+                          'Enquiry Details',
+                          opts['description'] ?? '-',
+                        ),
+                      ],
+                    ),
                   ),
-                  _row('Enquiry Details', opts['description'] ?? '-'),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 28),
 
                   // ── Wallet buttons (iOS / Android only — not macOS) ──────────
                   if (price != 0 && !kIsWeb && !Platform.isMacOS) ...[
@@ -523,29 +562,16 @@ class _BookConfirmAppointmentScreenState
                   ],
 
                   // ── Pay & Submit button ───────────────────────────────────────
-                  Center(
-                    child: SizedBox(
-                      width: 220,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed:
-                            (isLoading || isProcessingPayment)
-                                ? null
-                                : _handlePaymentAndCreateAppointment,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1F3C88),
-                          foregroundColor: Colors.white,
-                        ),
-                        child:
-                            (isLoading || isProcessingPayment)
-                                ? const AppLoader(size: 20)
-                                : Text(
-                                  price == 0
-                                      ? 'Submit'
-                                      : 'Pay & Submit (\$${price.toStringAsFixed(2)})',
-                                ),
-                      ),
-                    ),
+                  NextButton(
+                    label:
+                        price == 0
+                            ? 'Submit'
+                            : 'Pay & Submit (\$${price.toStringAsFixed(2)})',
+                    isLoading: isLoading || isProcessingPayment,
+                    onTap:
+                        (isLoading || isProcessingPayment)
+                            ? null
+                            : _handlePaymentAndCreateAppointment,
                   ),
                 ],
               ),
