@@ -46,6 +46,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
   String? _selectedFileName;
 
   final List<String> _tabs = ['all', 'pending', 'completed'];
+  bool _stagesExpanded = false;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
 
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
+        setState(() => _stagesExpanded = false);
         _loadWorkflowData(type: _tabs[_tabController.index]);
       }
     });
@@ -409,7 +411,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
     return ScrollConfiguration(
       behavior: _WebScrollBehavior(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF0F2F5),
 
         appBar: CommonAppBar(
           titleName: 'Workflow Stages',
@@ -428,14 +430,18 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
                     maxWidth: AppResponsive.maxContentWidth,
                   ),
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                    padding: const EdgeInsets.all(5),
+                    margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      color: ThemeConfig.navyBlue.withValues(alpha: 0.04),
-                      border: Border.all(
-                        color: ThemeConfig.navyBlue.withValues(alpha: 0.08),
-                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: TabBar(
                       controller: _tabController,
@@ -444,8 +450,17 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
                       labelPadding: EdgeInsets.zero,
                       indicatorSize: TabBarIndicatorSize.tab,
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(20),
                         color: ThemeConfig.goldenYellow,
+                        boxShadow: [
+                          BoxShadow(
+                            color: ThemeConfig.goldenYellow.withValues(
+                              alpha: 0.35,
+                            ),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       labelColor: ThemeConfig.navyBlue,
                       unselectedLabelColor: ThemeConfig.navyBlue.withValues(
@@ -534,6 +549,12 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
                             WorkflowProgressWidget(
                               workflowResponse:
                               _workflowResponse!,
+                              tabType: _tabs[_tabController.index],
+                              stagesExpanded: _stagesExpanded,
+                              onSeeAllTap:
+                                  () => setState(() => _stagesExpanded = true),
+                              onSeeLessTap:
+                                  () => setState(() => _stagesExpanded = false),
                               onStageTap: _showStageDetails,
                               onChecklistPlusTap:
                               _openUploadOptions,
@@ -562,25 +583,48 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
   }
 
   Widget _buildCaseSummary(CaseSummary summary) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              summary.caseName ?? '',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: ThemeConfig.navyBlue,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary.caseName ?? '',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: ThemeConfig.navyBlue,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: ThemeConfig.navyBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Status: ${summary.caseStatus ?? ''}',
+              style: TextStyle(
+                color: ThemeConfig.navyBlue.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
               ),
             ),
-            const SizedBox(height: 8),
-            Text('Status: ${summary.caseStatus ?? ''}'),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

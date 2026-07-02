@@ -288,7 +288,6 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AuthHeader(
-            icon: Icons.gavel_rounded,
             title: 'Welcome back',
             subtitle: 'Sign in to access your client portal',
           ),

@@ -184,7 +184,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const AuthHeader(
-            icon: Icons.person_add_rounded,
             title: 'Create account',
             subtitle: 'Join the Bansal Immigration client portal',
           ),

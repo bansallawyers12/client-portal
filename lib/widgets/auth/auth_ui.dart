@@ -184,13 +184,17 @@ class AuthScreenShell extends StatelessWidget {
 }
 
 class AuthHeader extends StatelessWidget {
-  final IconData icon;
+  static const String defaultLogoAsset = 'assets/icons/app_icon.png';
+
+  final IconData? icon;
+  final String? logoAssetPath;
   final String title;
   final String subtitle;
 
   const AuthHeader({
     super.key,
-    required this.icon,
+    this.icon,
+    this.logoAssetPath = defaultLogoAsset,
     required this.title,
     required this.subtitle,
   });
@@ -200,24 +204,41 @@ class AuthHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 80,
+          height: 80,
+          padding: logoAssetPath != null ? const EdgeInsets.all(14) : null,
           decoration: BoxDecoration(
-            borderRadius: AuthRadius.borderRadius,
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFCA28), ThemeConfig.goldenYellow],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            borderRadius: BorderRadius.circular(20),
+            color: logoAssetPath != null ? Colors.white : null,
+            gradient:
+                logoAssetPath == null
+                    ? const LinearGradient(
+                      colors: [Color(0xFFFFCA28), ThemeConfig.goldenYellow],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                    : null,
+            border:
+                logoAssetPath != null
+                    ? Border.all(
+                      color: ThemeConfig.goldenYellow.withValues(alpha: 0.25),
+                    )
+                    : null,
             boxShadow: [
               BoxShadow(
-                color: ThemeConfig.goldenYellow.withValues(alpha: 0.35),
+                color: ThemeConfig.goldenYellow.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Icon(icon, size: 34, color: ThemeConfig.navyBlue),
+          child:
+              logoAssetPath != null
+                  ? Image.asset(
+                    logoAssetPath!,
+                    fit: BoxFit.contain,
+                  )
+                  : Icon(icon, size: 34, color: ThemeConfig.navyBlue),
         ),
         const SizedBox(height: 20),
         Text(

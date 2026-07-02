@@ -101,6 +101,15 @@ class _CommonAppBarState extends State<CommonAppBar> {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: ThemeConfig.goldenYellow,
+      foregroundColor: Colors.white,
+      elevation: 4,
+      shadowColor: ThemeConfig.goldenYellow.withValues(alpha: 0.35),
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(28),
+        ),
+      ),
       iconTheme: const IconThemeData(color: Colors.white),
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
