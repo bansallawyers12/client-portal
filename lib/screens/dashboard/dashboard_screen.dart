@@ -428,18 +428,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 onBilling: () {
                                   Navigator.pushNamed(context, '/billing-list');
                                 },
-                                onDocumentStatus: () {
-                                  Navigator.pushNamed(context, '/documents');
-                                },
-                                onUpcomingDeadlines: () {
-                                  Navigator.pushNamed(context, '/tasks');
-                                },
-                                /*onRecentActivity: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/recent-activity',
-                                  );
-                                },*/
                                 onMessage: () {
                                   Navigator.pushNamed(
                                     context,

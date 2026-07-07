@@ -78,6 +78,20 @@ class NotificationModel {
       updatedAt: DateTime.parse(json['updated_at']),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'sender_id': senderId,
+    'client_matter_id': clientMatterId,
+    'url': url,
+    'notification_type': notificationType,
+    'message': message,
+    'is_read': isRead ? 1 : 0,
+    'seen': seen ? 1 : 0,
+    'sender_name': senderName,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': updatedAt.toIso8601String(),
+  };
 }
 
 class Pagination {

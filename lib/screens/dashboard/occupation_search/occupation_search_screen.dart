@@ -148,13 +148,26 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     });
   }
 
+  static const Color _navy = ThemeConfig.navyBlue;
+  static const Color _gold = ThemeConfig.goldenYellow;
+  static const Color _border = Color(0xFFE2E8F0);
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _textMuted = Color(0xFF64748B);
+  static const _green = Color(0xFF10B981);
+  static const _red = Color(0xFFEF4444);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Occupation Search'),
+        title: const Text(
+          'Occupation Search',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: ThemeConfig.goldenYellow,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SafeArea(
         child: Center(
@@ -165,55 +178,21 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
             child: Padding(
               padding: AppResponsive.pagePadding(context),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _controller,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search occupation',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  if (loading) const AppLoader(),
-
-                  if (suggestions.isNotEmpty)
-                    Container(
-                      height: 220,
-                      margin: const EdgeInsets.only(top: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ListView.builder(
-                        itemCount: suggestions.length,
-                        itemBuilder: (_, i) {
-                          final item = suggestions[i];
-
-                          return ListTile(
-                            dense: true,
-                            title: Text(item['occupation_title'] ?? ''),
-                            subtitle: Text(item['anzsco_code'] ?? ''),
-                            onTap: () {
-                              _controller.text = item['occupation_title'] ?? '';
-                              FocusScope.of(context).unfocus();
-                              _getDetails(item['anzsco_code']);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-
-                  const SizedBox(height: 12),
-
-                  if (details != null && !loading)
+                  const SizedBox(height: 4),
+                  _searchField(),
+                  const SizedBox(height: 14),
+                  if (loading)
+                    const Expanded(child: Center(child: AppLoader()))
+                  else if (suggestions.isNotEmpty)
+                    Expanded(child: _suggestionsList())
+                  else if (details != null)
                     Expanded(
-                      child: SingleChildScrollView(child: _buildTable()),
-                    ),
+                      child: SingleChildScrollView(child: _buildDetails()),
+                    )
+                  else
+                    Expanded(child: _emptyState()),
                 ],
               ),
             ),
@@ -223,45 +202,288 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     );
   }
 
-  Widget _buildTable() {
+  Widget _searchField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _controller,
+        onChanged: _onSearchChanged,
+        style: const TextStyle(fontSize: 14.5, color: _textPrimary),
+        decoration: InputDecoration(
+          hintText: 'Search occupation or ANZSCO code',
+          hintStyle: const TextStyle(fontSize: 14, color: _textMuted),
+          prefixIcon: const Icon(Icons.search_rounded, color: _textMuted),
+          suffixIcon:
+              _controller.text.isNotEmpty
+                  ? IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: _textMuted,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      _controller.clear();
+                      _onSearchChanged('');
+                      setState(() {});
+                    },
+                  )
+                  : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: _gold.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.work_outline_rounded,
+              size: 34,
+              color: _gold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Search for an occupation',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _navy,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Type an occupation name or ANZSCO code\nto view eligible visa options.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: _textMuted, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _suggestionsList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        itemCount: suggestions.length,
+        separatorBuilder:
+            (_, _) => const Divider(height: 1, color: _border, indent: 16),
+        itemBuilder: (_, i) {
+          final item = suggestions[i];
+          return InkWell(
+            onTap: () {
+              _controller.text = item['occupation_title'] ?? '';
+              FocusScope.of(context).unfocus();
+              _getDetails(item['anzsco_code']);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      item['occupation_title'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: _textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _navy.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      item['anzsco_code'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _navy,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetails() {
     final visas = details!['visa_options'];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "${details!['anzsco_code']}: ${details!['occupation_title']}",
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          'Possible Visa Options',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: _gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "${details!['anzsco_code']}",
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF9A6A00),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "${details!['occupation_title']}",
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: _navy,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: _gold,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Possible Visa Options',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: _navy,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Table(
+              border: TableBorder.all(color: _border, width: 1),
+              columnWidths: const {
+                0: FlexColumnWidth(2.5),
+                1: FlexColumnWidth(1),
+                2: FlexColumnWidth(1),
+                3: FlexColumnWidth(1),
+                4: FlexColumnWidth(1),
+                5: FlexColumnWidth(1),
+              },
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              children: [
+                _headerRow(),
+                ...visas.entries.map<TableRow>((e) => _row(e.value)).toList(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _legend(),
+        ],
+      ),
+    );
+  }
 
-        Table(
-          border: TableBorder.all(color: Colors.grey.shade300, width: 0.5),
-          columnWidths: const {
-            0: FlexColumnWidth(2.5),
-            1: FlexColumnWidth(1),
-            2: FlexColumnWidth(1),
-            3: FlexColumnWidth(1),
-            4: FlexColumnWidth(1),
-            5: FlexColumnWidth(1),
-          },
-          children: [
-            _headerRow(),
-            ...visas.entries.map<TableRow>((e) => _row(e.value)).toList(),
-          ],
+  Widget _legend() {
+    Widget item(IconData icon, Color color, String label) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: color),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11.5, color: _textMuted),
         ),
+      ],
+    );
+
+    return Row(
+      children: [
+        item(Icons.check_circle, _green, 'Eligible'),
+        const SizedBox(width: 16),
+        item(Icons.cancel, _red, 'Not eligible'),
       ],
     );
   }
 
   TableRow _headerRow() {
     return TableRow(
-      decoration: const BoxDecoration(color: Color(0xFFF1F5F9)),
+      decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06)),
       children: [
         _cell('Visa Type'),
         _cell('Eligibility'),
@@ -277,19 +499,20 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     return TableRow(
       children: [
         Padding(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(8),
           child: Row(
             children: [
               Container(
-                width: 26,
-                height: 26,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E3A8A),
-                  shape: BoxShape.circle,
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _navy,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   data['visa_type'],
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 8,
                     color: Colors.white,
@@ -297,11 +520,15 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   data['visa_name'],
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: _textPrimary,
+                    height: 1.3,
+                  ),
                 ),
               ),
             ],
@@ -316,15 +543,12 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     );
   }
 
-  static const _green = Color(0xFF10B981);
-  static const _red = Color(0xFFEF4444);
-
   Widget _iconCell(bool value) {
     return Padding(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(8),
       child: Icon(
-        value ? Icons.check_circle : Icons.close,
-        size: 16,
+        value ? Icons.check_circle : Icons.cancel,
+        size: 17,
         color: value ? _green : _red,
       ),
     );
@@ -332,10 +556,15 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
 
   static Widget _cell(String text) {
     return Padding(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(8),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: _navy,
+        ),
       ),
     );
   }

@@ -51,12 +51,6 @@ class MyFilesScreen extends StatelessWidget {
                         "This feature will be available in a future update.",
                       );
                     },
-                    onDocumentStatus: () {
-                      Navigator.pushNamed(context, '/documents');
-                    },
-                    onUpcomingDeadlines: () {
-                      Navigator.pushNamed(context, '/tasks');
-                    },
                   ),
                   const SizedBox(height: 24),
                 ],

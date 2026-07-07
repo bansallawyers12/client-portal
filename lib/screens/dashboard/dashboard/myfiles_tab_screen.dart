@@ -9,6 +9,7 @@ import '../../../main.dart';
 import '../../../models/notification/notification.dart';
 import '../../../services/api_service.dart';
 import '../../../utils/app_loader.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/dialog/login_required_dialog.dart';
 import '../../workflow/message/workflow_messages_screen.dart';
@@ -26,7 +27,7 @@ class MyFilesTabScreen extends StatefulWidget {
 }
 
 class _MyFilesTabScreenState extends State<MyFilesTabScreen>
-    with RouteAware, WidgetsBindingObserver {
+    with RouteAware, WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   bool _isBlocked = false;
   bool _isLoading = true;
   bool _isNavigating = false;
@@ -39,13 +40,64 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
   Map<String, dynamic>? _latestActionRequired;
   bool _isFetchingActionRequired = false;
 
+  static const String _notificationsCacheKey = 'myfiles_notifications_v1';
+  static const String _actionRequiredCacheKey = 'myfiles_action_required_v1';
+
+  String get _cacheScope =>
+      AuthService.selectedMatterId?.toString() ?? 'guest';
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkUserStatus();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    if (AuthService.isAuthenticated && AuthService.isMatterSelected) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+    await _loadFromCache();
+    _checkUserStatus(silent: true);
     _fetchNotifications();
     _fetchActionRequired();
+  }
+
+  Future<void> _loadFromCache() async {
+    final scope = _cacheScope;
+
+    final cachedNotifications = await CacheHelper.loadEnvelope(
+      '${_notificationsCacheKey}_$scope',
+    );
+    if (cachedNotifications is List && cachedNotifications.isNotEmpty) {
+      notifications = cachedNotifications
+          .map(
+            (e) => NotificationModel.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList();
+    }
+
+    final cachedActionRequired = await CacheHelper.loadEnvelope(
+      '${_actionRequiredCacheKey}_$scope',
+    );
+    if (cachedActionRequired is Map) {
+      final data = Map<String, dynamic>.from(cachedActionRequired);
+      _actionRequiredCount = data['unread_count'] as int? ?? 0;
+      final latest = data['latest_unread'];
+      _latestActionRequired =
+          latest is Map ? Map<String, dynamic>.from(latest) : null;
+    }
+
+    if (mounted &&
+        (notifications.isNotEmpty || _actionRequiredCount > 0)) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -63,7 +115,7 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
 
   @override
   void didPopNext() {
-    _checkUserStatus();
+    _checkUserStatus(silent: true);
     _fetchNotifications();
     _fetchActionRequired();
   }
@@ -71,16 +123,38 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _fetchNotifications();
-      _fetchActionRequired();
+      _fetchNotifications(forceRefresh: true);
+      _fetchActionRequired(forceRefresh: true);
     }
   }
 
-  Future<void> _fetchActionRequired() async {
+  Future<void> _fetchActionRequired({bool forceRefresh = false}) async {
     final bool isLoggedIn = AuthService.isAuthenticated;
     if (!isLoggedIn || !mounted || _isFetchingActionRequired) return;
 
-    setState(() => _isFetchingActionRequired = true);
+    final scope = _cacheScope;
+    final cacheKey = '${_actionRequiredCacheKey}_$scope';
+    final hasCachedData = _actionRequiredCount > 0 || _latestActionRequired != null;
+
+    if (!forceRefresh && !hasCachedData) {
+      final cached = await CacheHelper.loadEnvelope(cacheKey);
+      if (cached is Map) {
+        final data = Map<String, dynamic>.from(cached);
+        if (mounted) {
+          setState(() {
+            _actionRequiredCount = data['unread_count'] as int? ?? 0;
+            final latest = data['latest_unread'];
+            _latestActionRequired =
+                latest is Map ? Map<String, dynamic>.from(latest) : null;
+          });
+        }
+      }
+    }
+
+    final showLoader = _actionRequiredCount == 0 && _latestActionRequired == null;
+    if (showLoader && mounted) {
+      setState(() => _isFetchingActionRequired = true);
+    }
 
     try {
       final data = await ApiService.getActionRequired();
@@ -88,9 +162,16 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
       if (!mounted) return;
 
       if (data['success'] == true) {
+        final payload = {
+          'unread_count': data['data']['unread_count'] ?? 0,
+          'latest_unread': data['data']['latest_unread'],
+        };
+        await CacheHelper.saveEnvelope(key: cacheKey, data: payload);
         setState(() {
-          _actionRequiredCount = data['data']['unread_count'] ?? 0;
-          _latestActionRequired = data['data']['latest_unread'];
+          _actionRequiredCount = payload['unread_count'] as int;
+          final latest = payload['latest_unread'];
+          _latestActionRequired =
+              latest is Map ? Map<String, dynamic>.from(latest) : null;
           _isFetchingActionRequired = false;
         });
       } else {
@@ -102,11 +183,33 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     }
   }
 
-  Future<void> _fetchNotifications() async {
+  Future<void> _fetchNotifications({bool forceRefresh = false}) async {
     final bool isLoggedIn = AuthService.isAuthenticated;
     if (!isLoggedIn || !mounted || isFetchingNotifications) return;
 
-    setState(() => isFetchingNotifications = true);
+    final scope = _cacheScope;
+    final cacheKey = '${_notificationsCacheKey}_$scope';
+
+    if (!forceRefresh && notifications.isEmpty) {
+      final cached = await CacheHelper.loadEnvelope(cacheKey);
+      if (cached is List && cached.isNotEmpty) {
+        final cachedNotifications = cached
+            .map(
+              (e) => NotificationModel.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
+            .toList();
+        if (mounted) {
+          setState(() => notifications = cachedNotifications);
+        }
+      }
+    }
+
+    final showLoader = notifications.isEmpty;
+    if (showLoader && mounted) {
+      setState(() => isFetchingNotifications = true);
+    }
 
     try {
       final data = await ApiService.getRecentUnreadNotifications();
@@ -115,6 +218,11 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
           (data['data']['notifications'] as List)
               .map((json) => NotificationModel.fromJson(json))
               .toList();
+
+      await CacheHelper.saveEnvelope(
+        key: cacheKey,
+        data: newNotifications.map((e) => e.toJson()).toList(),
+      );
 
       if (!mounted) return;
 
@@ -125,13 +233,15 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() => isFetchingNotifications = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load notifications: $e")),
-      );
+      if (notifications.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to load notifications: $e")),
+        );
+      }
     }
   }
 
-  Future<void> _checkUserStatus() async {
+  Future<void> _checkUserStatus({bool silent = false}) async {
     try {
       final bool isLoggedIn = AuthService.isAuthenticated;
       if (!isLoggedIn) {
@@ -163,7 +273,9 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
         return;
       }
 
-      setState(() => _isLoading = true);
+      if (!silent && mounted) {
+        setState(() => _isLoading = true);
+      }
       final result = await ApiService.checkUserAuthentication();
 
       if (result['success'] == true) {
@@ -692,6 +804,8 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     if (_isLoading) {
       return const Center(child: AppLoader());
     }
@@ -710,20 +824,6 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
         Navigator.pushNamed(
           context,
           '/billing-list',
-          arguments: {"matter_id": AuthService.selectedMatterId},
-        );
-      },
-      onDocumentStatus: () {
-        Navigator.pushNamed(
-          context,
-          '/documents',
-          arguments: {"matter_id": AuthService.selectedMatterId},
-        );
-      },
-      onUpcomingDeadlines: () {
-        Navigator.pushNamed(
-          context,
-          '/tasks',
           arguments: {"matter_id": AuthService.selectedMatterId},
         );
       },

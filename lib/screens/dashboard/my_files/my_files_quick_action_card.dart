@@ -7,16 +7,12 @@ import '../../../widgets/dialog/login_required_dialog.dart';
 class MyFilesQuickActionsCard extends StatelessWidget {
   final VoidCallback? onViewWorkflow;
   final VoidCallback? onBilling;
-  final VoidCallback? onDocumentStatus;
-  final VoidCallback? onUpcomingDeadlines;
   final VoidCallback? onMessage;
 
   const MyFilesQuickActionsCard({
     super.key,
     this.onViewWorkflow,
     this.onBilling,
-    this.onDocumentStatus,
-    this.onUpcomingDeadlines,
     this.onMessage,
   });
 
@@ -42,12 +38,6 @@ class MyFilesQuickActionsCard extends StatelessWidget {
         label: 'Messages',
         gradient: const [Color(0xFF2E7D32), Color(0xFF81C784)],
         onTap: onMessage ?? () {},
-      ),
-      _FileAction(
-        icon: Icons.folder_open_rounded,
-        label: 'Documents',
-        gradient: const [Color(0xFF1565C0), Color(0xFF90CAF9)],
-        onTap: onDocumentStatus ?? () {},
       ),
     ];
 
@@ -111,34 +101,23 @@ class MyFilesQuickActionsCard extends StatelessWidget {
           const SizedBox(height: 16),
           Column(
             children: [
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _actionTile(context: context, action: actions[0]),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _actionTile(context: context, action: actions[0]),
+                        const SizedBox(height: 14),
+                        _actionTile(context: context, action: actions[2]),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _actionTile(context: context, action: actions[1]),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _actionTile(context: context, action: actions[2]),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _actionTile(context: context, action: actions[3]),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _actionTile(context: context, action: actions[1]),
+                  ),
+                ],
               ),
             ],
           ),

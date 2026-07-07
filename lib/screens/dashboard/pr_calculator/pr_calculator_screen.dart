@@ -4,6 +4,7 @@ import 'package:client/models/pr_points_response.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
@@ -96,17 +97,17 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     }
   }
 
+  static const Color _navy = ThemeConfig.navyBlue;
+  static const Color _gold = ThemeConfig.goldenYellow;
+  static const Color _fieldFill = Color(0xFFF8FAFC);
+  static const Color _border = Color(0xFFE2E8F0);
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _textMuted = Color(0xFF64748B);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*appBar: AppBar(
-        title: const Text(
-          'PR Calculator',
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        backgroundColor: ThemeConfig.goldenYellow,
-        foregroundColor: Colors.white,
-      ),*/
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: CommonAppBar(
         titleName: 'PR Calculator',
         matterID: AuthService.selectedMatterId,
@@ -114,137 +115,26 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
       body:
           loading || data == null
               ? const Center(child: AppLoader())
-              : SingleChildScrollView(
-                padding: AppResponsive.pagePadding(context),
-                child: SafeArea(
+              : SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: AppResponsive.pagePadding(context),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(
                         maxWidth: AppResponsive.maxContentWidth,
                       ),
-                      child: Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Calculate Your Points",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[850],
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-
-                              _infoBox(),
-                              const SizedBox(height: 24),
-
-                              _buildDropdown<PointItem>(
-                                "Age (at time of invitation)",
-                                data!.age,
-                                age,
-                                (v) => setState(() => age = v),
-                              ),
-
-                              _buildDropdown<PointItem>(
-                                "English Language Proficiency",
-                                data!.englishLanguage,
-                                english,
-                                (v) => setState(() => english = v),
-                                helper:
-                                    "IELTS 6/PTE 50 = Competent, IELTS 7/PTE 65 = Proficient, IELTS 8/PTE 79 = Superior",
-                              ),
-
-                              _buildDropdown<PointItem>(
-                                "Educational Qualifications",
-                                data!.education,
-                                education,
-                                (v) => setState(() => education = v),
-                                helper:
-                                    "Qualification must be recognized by the relevant assessing authority",
-                              ),
-
-                              _buildDropdown<PointItem>(
-                                "Skilled Employment Experience (Overseas)",
-                                data!.overseasExp,
-                                overseasExp,
-                                (v) => setState(() => overseasExp = v),
-                              ),
-
-                              _buildDropdown<PointItem>(
-                                "Skilled Employment Experience (Australia)",
-                                data!.australiaExp,
-                                ausExp,
-                                (v) => setState(() => ausExp = v),
-                              ),
-
-                              const SizedBox(height: 24),
-                              Text(
-                                "Additional Points",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[850],
-                                ),
-                              ),
-
-                              ...additionalPoints.entries.map((e) {
-                                return _checkbox(
-                                  e.key.label,
-                                  e.value,
-                                  (v) => setState(
-                                    () => additionalPoints[e.key] = v,
-                                  ),
-                                  subtitle: e.key.description ?? e.key.note,
-                                );
-                              }),
-
-                              const SizedBox(height: 24),
-
-                              _buildDropdown<PointItem>(
-                                "Partner / Spouse Status",
-                                data!.partnerStatus,
-                                partner,
-                                (v) => setState(() => partner = v),
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: ElevatedButton(
-                                  onPressed: _calculatePoints,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "Calculate My Points",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 32),
-                              _visaOptionsCard(data!.visaOptions),
-
-                              const SizedBox(height: 24),
-                              _importantNotes(data!.importantNotes),
-                            ],
-                          ),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          _formCard(),
+                          const SizedBox(height: 20),
+                          _visaOptionsCard(data!.visaOptions),
+                          const SizedBox(height: 20),
+                          _importantNotes(data!.importantNotes),
+                          const SizedBox(height: 8),
+                        ],
                       ),
                     ),
                   ),
@@ -253,19 +143,212 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     );
   }
 
+  BoxDecoration get _cardDecoration => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(color: _border),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 16,
+        offset: const Offset(0, 6),
+      ),
+    ],
+  );
+
+  Widget _formCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _gold.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.calculate_rounded,
+                  color: _gold,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Calculate Your Points",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _navy,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      "Estimate your skilled migration score",
+                      style: TextStyle(fontSize: 12.5, color: _textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _infoBox(),
+          const SizedBox(height: 22),
+
+          _buildDropdown<PointItem>(
+            "Age (at time of invitation)",
+            data!.age,
+            age,
+            (v) => setState(() => age = v),
+          ),
+          _buildDropdown<PointItem>(
+            "English Language Proficiency",
+            data!.englishLanguage,
+            english,
+            (v) => setState(() => english = v),
+            helper:
+                "IELTS 6/PTE 50 = Competent, IELTS 7/PTE 65 = Proficient, IELTS 8/PTE 79 = Superior",
+          ),
+          _buildDropdown<PointItem>(
+            "Educational Qualifications",
+            data!.education,
+            education,
+            (v) => setState(() => education = v),
+            helper:
+                "Qualification must be recognized by the relevant assessing authority",
+          ),
+          _buildDropdown<PointItem>(
+            "Skilled Employment Experience (Overseas)",
+            data!.overseasExp,
+            overseasExp,
+            (v) => setState(() => overseasExp = v),
+          ),
+          _buildDropdown<PointItem>(
+            "Skilled Employment Experience (Australia)",
+            data!.australiaExp,
+            ausExp,
+            (v) => setState(() => ausExp = v),
+          ),
+
+          const SizedBox(height: 8),
+          _sectionHeader("Additional Points"),
+          const SizedBox(height: 12),
+          ...additionalPoints.entries.map((e) {
+            return _pointTile(
+              e.key.label,
+              e.value,
+              e.key.value,
+              (v) => setState(() => additionalPoints[e.key] = v),
+              subtitle: e.key.description ?? e.key.note,
+            );
+          }),
+
+          const SizedBox(height: 20),
+          _buildDropdown<PointItem>(
+            "Partner / Spouse Status",
+            data!.partnerStatus,
+            partner,
+            (v) => setState(() => partner = v),
+          ),
+
+          const SizedBox(height: 24),
+          _ctaButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: _gold,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w800,
+            color: _navy,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _ctaButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton.icon(
+        onPressed: _calculatePoints,
+        icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+        label: const Text(
+          "Calculate My Points",
+          style: TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _navy,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: _navy.withValues(alpha: 0.4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _infoBox() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF5FF),
-        borderRadius: BorderRadius.circular(8),
-        border: Border(left: BorderSide(color: Colors.blue, width: 4)),
+        color: _navy.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: const Text(
-        "Note: This calculator shows your base points. Additional points "
-        "(5 for State/Territory nomination or 15 for regional nomination) "
-        "may apply when you receive an invitation.",
-        style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: _navy.withValues(alpha: 0.7),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "This calculator shows your base points. Additional points "
+              "(5 for State/Territory nomination or 15 for regional nomination) "
+              "may apply when you receive an invitation.",
+              style: TextStyle(
+                color: _navy.withValues(alpha: 0.75),
+                fontSize: 12.5,
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -278,26 +361,35 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     String? helper,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: Colors.grey[850],
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13.5,
+              color: _textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           DropdownButtonFormField<T>(
             initialValue:
                 items.any((e) => e.value == value?.value)
                     ? items.firstWhere((e) => e.value == value?.value)
                     : null,
             isExpanded: true,
-            hint: const Text("Select", style: TextStyle(fontSize: 12)),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: _textMuted,
+            ),
+            hint: const Text(
+              "Select",
+              style: TextStyle(fontSize: 13.5, color: _textMuted),
+            ),
+            style: const TextStyle(fontSize: 13.5, color: _textPrimary),
+            borderRadius: BorderRadius.circular(12),
             items:
                 items
                     .map(
@@ -306,29 +398,46 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                         child: Text(
                           e.label,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[850],
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            color: _textPrimary,
                           ),
                         ),
                       ),
                     )
                     .toList(),
             onChanged: onChanged,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: _fieldFill,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 10,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 15,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _navy, width: 1.5),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _border),
               ),
             ),
           ),
           if (helper != null) ...[
-            const SizedBox(height: 2),
+            const SizedBox(height: 6),
             Text(
               helper,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 11.5,
+                color: _textMuted,
+                height: 1.4,
+              ),
             ),
           ],
         ],
@@ -336,48 +445,125 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     );
   }
 
-  Widget _checkbox(
+  Widget _pointTile(
     String title,
     bool value,
+    int points,
     ValueChanged<bool> onChanged, {
     String? subtitle,
   }) {
-    return CheckboxListTile(
-      contentPadding: EdgeInsets.zero,
-      value: value,
-      onChanged: (v) => onChanged(v ?? false),
-      title: Text(
-        title,
-        style: TextStyle(fontSize: 13, color: Colors.grey[850]),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => onChanged(!value),
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: value ? _navy.withValues(alpha: 0.05) : _fieldFill,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: value ? _navy : _border,
+                width: value ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: value ? _navy : Colors.transparent,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: value ? _navy : const Color(0xFFCBD5E1),
+                      width: 1.6,
+                    ),
+                  ),
+                  child:
+                      value
+                          ? const Icon(
+                            Icons.check_rounded,
+                            size: 15,
+                            color: Colors.white,
+                          )
+                          : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight:
+                              value ? FontWeight.w700 : FontWeight.w500,
+                          color: _textPrimary,
+                        ),
+                      ),
+                      if (subtitle != null && subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: _textMuted,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color:
+                        value
+                            ? _navy
+                            : _navy.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "+$points",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: value ? Colors.white : _navy,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      subtitle:
-          subtitle != null
-              ? Text(
-                subtitle,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              )
-              : null,
-      controlAffinity: ListTileControlAffinity.leading,
     );
   }
 
   Widget _visaOptionsCard(List<VisaOption> visas) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Visa Options",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ...visas.map(_visaItem),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader("Visa Options"),
+          const SizedBox(height: 16),
+          ...visas.map(_visaItem),
+        ],
       ),
     );
   }
@@ -385,13 +571,19 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
   Widget _visaItem(VisaOption v) {
     final color =
         v.code == "189"
-            ? Colors.blue
+            ? const Color(0xFF3498DB)
             : v.code == "190"
-            ? Colors.green
-            : Colors.purple;
+            ? const Color(0xFF27AE60)
+            : const Color(0xFF9B59B6);
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -411,20 +603,27 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                 Text(
                   v.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
+                    color: _textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   v.description,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: const TextStyle(fontSize: 12.5, color: _textMuted),
                 ),
-                if (v.additionalPointsNote != null)
+                if (v.additionalPointsNote != null) ...[
+                  const SizedBox(height: 2),
                   Text(
                     v.additionalPointsNote!,
-                    style: const TextStyle(fontSize: 11, color: Colors.black45),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: color.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                ],
               ],
             ),
           ),
@@ -434,28 +633,45 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
   }
 
   Widget _importantNotes(List<String> notes) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Important Notes",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            ...notes.map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [const Text("• "), Expanded(child: Text(e))],
-                ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader("Important Notes"),
+          const SizedBox(height: 14),
+          ...notes.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 6),
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: _gold,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      e,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: _textMuted,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -546,89 +762,163 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
       context: context,
       builder:
           (_) => Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: SingleChildScrollView(
-              // makes dialog scrollable if content is long
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Your Points",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 28),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [_navy, Color(0xFF3B2E9E)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    Text(
-                      "$totalPoints",
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-                    Text("Base: $basePoints  |  Additional: $additionalPoints"),
-
-                    const SizedBox(height: 16),
-
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "YOUR POINTS",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white70,
+                            letterSpacing: 1.5,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "$totalPoints",
+                          style: const TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            "Base $basePoints  •  Additional $additionalPoints",
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Breakdown list
-                    ...breakdown.values.map((e) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                e['label'],
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF27AE60).withValues(
+                              alpha: 0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF1E7E45),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        ...breakdown.values.map((e) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    e['label'],
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: _textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _navy.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    "${e['points']} pts",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: _navy,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _navy,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text("${e['points']} pts"),
-                          ],
+                            child: const Text(
+                              "Close",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    }).toList(),
-
-                    const SizedBox(height: 20),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("Close"),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

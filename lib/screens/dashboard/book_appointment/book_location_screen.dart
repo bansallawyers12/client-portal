@@ -141,16 +141,15 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
     }
   }
 
-  Widget _cardWidth(BuildContext context, Widget child) {
-    final width = MediaQuery.of(context).size.width;
-    return SizedBox(
-      width:
-          width > 900
-              ? 320
-              : width > 600
-              ? 280
-              : width - 100,
-      child: child,
+  Widget _selectionColumn(List<Widget> cards) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (int i = 0; i < cards.length; i++) ...[
+          if (i > 0) const SizedBox(height: 16),
+          cards[i],
+        ],
+      ],
     );
   }
 
@@ -213,80 +212,60 @@ class _BookLocationScreenState extends State<BookLocationScreen> {
               )
               : SafeArea(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SectionTitle('Select Office Location'),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children:
-                          locations
-                              .map(
-                                (location) => _cardWidth(
-                                  context,
-                                  SelectionCard(
-                                    title: location.name,
-                                    subtitle: location.fullAddress,
-                                    isSelected:
-                                        selectedLocation?.id == location.id,
-                                    onTap:
-                                        () => setState(
-                                          () => selectedLocation = location,
-                                        ),
+                    _selectionColumn(
+                      locations
+                          .map(
+                            (location) => SelectionCard(
+                              title: location.name,
+                              subtitle: location.fullAddress,
+                              isSelected: selectedLocation?.id == location.id,
+                              onTap:
+                                  () => setState(
+                                    () => selectedLocation = location,
                                   ),
-                                ),
-                              )
-                              .toList(),
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 32),
                     const SectionTitle('Meeting Type'),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children:
-                          meetingTypes
-                              .map(
-                                (meeting) => _cardWidth(
-                                  context,
-                                  SelectionCard(
-                                    icon: _iconFromString(meeting.icon),
-                                    title: meeting.name,
-                                    subtitle: meeting.description,
-                                    isSelected:
-                                        selectedMeeting?.id == meeting.id,
-                                    onTap:
-                                        () => setState(
-                                          () => selectedMeeting = meeting,
-                                        ),
+                    _selectionColumn(
+                      meetingTypes
+                          .map(
+                            (meeting) => SelectionCard(
+                              icon: _iconFromString(meeting.icon),
+                              title: meeting.name,
+                              subtitle: meeting.description,
+                              isSelected: selectedMeeting?.id == meeting.id,
+                              onTap:
+                                  () => setState(
+                                    () => selectedMeeting = meeting,
                                   ),
-                                ),
-                              )
-                              .toList(),
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 32),
                     const SectionTitle('Preferred Language'),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children:
-                          languages
-                              .map(
-                                (lang) => _cardWidth(
-                                  context,
-                                  SelectionCard(
-                                    title: "${lang.flag} ${lang.name}",
-                                    isSelected: selectedLanguage?.id == lang.id,
-                                    onTap:
-                                        () => setState(
-                                          () => selectedLanguage = lang,
-                                        ),
+                    _selectionColumn(
+                      languages
+                          .map(
+                            (lang) => SelectionCard(
+                              title: "${lang.flag} ${lang.name}",
+                              isSelected: selectedLanguage?.id == lang.id,
+                              onTap:
+                                  () => setState(
+                                    () => selectedLanguage = lang,
                                   ),
-                                ),
-                              )
-                              .toList(),
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 40),
                     NextButton(
