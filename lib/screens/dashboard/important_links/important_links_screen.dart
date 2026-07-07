@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/responsive_utils.dart';
@@ -9,50 +10,58 @@ import '../../../widgets/webview/universal_webview.dart';
 class ImportantLinksScreen extends StatelessWidget {
   const ImportantLinksScreen({super.key});
 
+  static const Color _navy = ThemeConfig.navyBlue;
+  static const Color _border = Color(0xFFE2E8F0);
+
   @override
   Widget build(BuildContext context) {
     final links = [
       _LinkItem(
         title: "Visa Processing",
+        subtitle: "Check current visa processing times",
+        icon: Icons.schedule_rounded,
         url: UrlConstants.importantLinks.visaProcessing,
-        color: Colors.blue,
+        color: const Color(0xFF3498DB),
       ),
       _LinkItem(
         title: "VEVO Check",
+        subtitle: "Verify visa entitlements online",
+        icon: Icons.verified_user_rounded,
         url: UrlConstants.importantLinks.vevoCheck,
-        color: Colors.green,
+        color: const Color(0xFF27AE60),
       ),
       _LinkItem(
         title: "Invitation Rounds",
+        subtitle: "Latest SkillSelect invitation results",
+        icon: Icons.mark_email_read_rounded,
         url: UrlConstants.importantLinks.invitationRounds,
-        color: Colors.orange,
+        color: const Color(0xFFE67E22),
       ),
       _LinkItem(
         title: "Departmental Forms",
+        subtitle: "Official immigration forms",
+        icon: Icons.description_rounded,
         url: UrlConstants.importantLinks.departmentalForms,
-        color: Colors.purple,
+        color: const Color(0xFF9B59B6),
       ),
       _LinkItem(
         title: "Course Check (CRICOS)",
+        subtitle: "Search registered courses",
+        icon: Icons.school_rounded,
         url: UrlConstants.importantLinks.courseCheck,
-        color: Colors.teal,
+        color: const Color(0xFF14B8A6),
       ),
       _LinkItem(
         title: "Consumer Guide",
+        subtitle: "Know your rights and protections",
+        icon: Icons.menu_book_rounded,
         url: UrlConstants.importantLinks.consumerGuide,
-        color: Colors.red,
+        color: const Color(0xFFE74C3C),
       ),
     ];
 
     return Scaffold(
-      /*appBar: AppBar(
-        backgroundColor: ThemeConfig.goldenYellow,
-        title: const Text(
-          "Important Links",
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),*/
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: CommonAppBar(
         titleName: 'Important Links',
         matterID: AuthService.selectedMatterId,
@@ -63,7 +72,7 @@ class ImportantLinksScreen extends StatelessWidget {
             constraints: const BoxConstraints(
               maxWidth: AppResponsive.maxContentWidth,
             ),
-            child: Padding(
+            child: SingleChildScrollView(
               padding: AppResponsive.pagePadding(context),
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -79,7 +88,7 @@ class ImportantLinksScreen extends StatelessWidget {
                           links
                               .map(
                                 (link) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
+                                  padding: const EdgeInsets.only(bottom: 14),
                                   child: _linkTile(context, link),
                                 ),
                               )
@@ -91,9 +100,9 @@ class ImportantLinksScreen extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: cols,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 3.5,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 3.2,
                     ),
                     itemCount: links.length,
                     itemBuilder:
@@ -109,44 +118,86 @@ class ImportantLinksScreen extends StatelessWidget {
   }
 
   Widget _linkTile(BuildContext context, _LinkItem link) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (_) => UniversalWebView(
-                  url: link.url,
-                  viewId: link.title,
-                  title: link.title,
-                ),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-        decoration: BoxDecoration(
-          color: link.color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: link.color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.link, color: link.color),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                link.title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: link.color,
-                ),
-              ),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => UniversalWebView(
+                    url: link.url,
+                    viewId: link.title,
+                    title: link.title,
+                  ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: link.color),
-          ],
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: _border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: link.color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(link.icon, color: link.color, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        link.title,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w700,
+                          color: _navy,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        link.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -155,11 +206,15 @@ class ImportantLinksScreen extends StatelessWidget {
 
 class _LinkItem {
   final String title;
+  final String subtitle;
+  final IconData icon;
   final String url;
   final Color color;
 
   const _LinkItem({
     required this.title,
+    required this.subtitle,
+    required this.icon,
     required this.url,
     required this.color,
   });

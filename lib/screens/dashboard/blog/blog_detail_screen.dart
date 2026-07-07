@@ -5,6 +5,7 @@ import 'package:flutter_html/flutter_html.dart';
 
 import '../../../config/theme_config.dart';
 import '../../../services/api_service_bansal_immigration.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 
 class BlogDetailScreen extends StatefulWidget {
@@ -48,12 +49,27 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
     super.dispose();
   }
 
+  String get _cacheKey => 'blog_detail_${widget.blogId}_v1';
+
   Future<void> _fetchBlogDetail() async {
     if (!mounted) return;
-    setState(() {
-      isLoading = true;
-      blog = null;
-    });
+
+    // Show cached article instantly if available (stale-while-revalidate).
+    final cached = await CacheHelper.loadEnvelope(
+      _cacheKey,
+      maxAge: const Duration(hours: 24),
+    );
+    if (cached is Map && mounted) {
+      setState(() {
+        blog = Map<String, dynamic>.from(cached);
+        isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        isLoading = true;
+        blog = null;
+      });
+    }
 
     Map<String, dynamic>? loaded;
     try {
@@ -65,9 +81,13 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       debugPrint('Error fetching blog: $e');
     }
 
+    if (loaded != null) {
+      await CacheHelper.saveEnvelope(key: _cacheKey, data: loaded);
+    }
+
     if (!mounted) return;
     setState(() {
-      blog = loaded;
+      if (loaded != null) blog = loaded;
       isLoading = false;
     });
   }

@@ -8,6 +8,7 @@ import 'package:client/screens/dashboard/personal_info/test_score/test_score_wid
 import 'package:client/screens/dashboard/personal_info/travel/travel_document_widget.dart';
 import 'package:client/screens/dashboard/personal_info/work_experience/work_experience_widget.dart';
 import 'package:client/services/api_service.dart';
+import 'package:client/utils/cache_helper.dart';
 import 'package:client/utils/responsive_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -28,6 +29,9 @@ class _PersonalInformationScreenState
   ClientPersonalDetail? personalDetail;
   List<Country> countries = [];
   List<VisaType> visaTypes = [];
+
+  static const String _countriesCacheKey = 'ref_countries_v1';
+  static const String _visaTypesCacheKey = 'ref_visa_types_v1';
 
   bool isLoading = true;
   String? errorMessage;
@@ -70,22 +74,43 @@ class _PersonalInformationScreenState
     }
 
     Future<void> fetchCountries() async {
+      // Seed from cache so the form still works if the network fails.
+      final cached = await CacheHelper.loadData<Country>(
+        _countriesCacheKey,
+        (json) => Country.fromJson(json),
+      );
+      if (cached.isNotEmpty) loadedCountries = cached;
+
       try {
         final response = await ApiService.getCountries()
             .timeout(const Duration(seconds: 30));
         if (response["success"] == true) {
-          loadedCountries = CountryResponse.fromJson(response).data;
+          final fresh = CountryResponse.fromJson(response).data;
+          if (fresh.isNotEmpty) {
+            loadedCountries = fresh;
+            await CacheHelper.saveData(key: _countriesCacheKey, data: fresh);
+          }
         }
       } catch (_) {
       }
     }
 
     Future<void> fetchVisaTypes() async {
+      final cached = await CacheHelper.loadData<VisaType>(
+        _visaTypesCacheKey,
+        (json) => VisaType.fromJson(json),
+      );
+      if (cached.isNotEmpty) loadedVisaTypes = cached;
+
       try {
         final response = await ApiService.getVisaTypes()
             .timeout(const Duration(seconds: 30));
         if (response["success"] == true) {
-          loadedVisaTypes = VisaTypeResponse.fromJson(response).data;
+          final fresh = VisaTypeResponse.fromJson(response).data;
+          if (fresh.isNotEmpty) {
+            loadedVisaTypes = fresh;
+            await CacheHelper.saveData(key: _visaTypesCacheKey, data: fresh);
+          }
         }
       } catch (_) {
       }

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme_config.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/app_loader.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 
 class OccupationSearchScreen extends StatefulWidget {
@@ -125,11 +126,26 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
   }
 
   Future<void> _getDetails(String code) async {
+    final detailKey = 'occupation_detail_${code}_v1';
+
     setState(() {
-      loading = true;
       suggestions.clear();
       details = null;
     });
+
+    // Occupation details are static reference data — show cache instantly.
+    final cached = await CacheHelper.loadEnvelope(
+      detailKey,
+      maxAge: const Duration(hours: 24),
+    );
+    if (cached is Map && mounted) {
+      setState(() {
+        details = Map<String, dynamic>.from(cached);
+        loading = false;
+      });
+    } else {
+      setState(() => loading = true);
+    }
 
     try {
       final res = await ApiServiceBansalImmigration.getOccupationDetails(code);
@@ -137,12 +153,14 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
       final dataList = res['data'];
 
       if (dataList is List && dataList.isNotEmpty) {
-        details = dataList.first;
+        details = Map<String, dynamic>.from(dataList.first);
+        await CacheHelper.saveEnvelope(key: detailKey, data: details);
       }
     } catch (e) {
       debugPrint(e.toString());
     }
 
+    if (!mounted) return;
     setState(() {
       loading = false;
     });

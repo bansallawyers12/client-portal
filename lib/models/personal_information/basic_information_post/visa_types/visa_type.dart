@@ -16,6 +16,14 @@ class VisaType {
       nickName: json["nick_name"],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "title": title,
+      "nick_name": nickName,
+    };
+  }
 }
 
 class VisaTypeResponse {

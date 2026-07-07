@@ -22,7 +22,7 @@ class _MattersScreenState extends State<MattersScreen> {
   @override
   void initState() {
     super.initState();
-    _mattersFuture = ApiService.getMatters();
+    _mattersFuture = ApiService.getMattersCached();
   }
 
   void _confirmSelection() {

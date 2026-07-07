@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import '../utils/app_logger.dart';
+import '../utils/cache_helper.dart';
 import '../utils/navigation_service.dart';
 import 'auth_service.dart';
 
@@ -361,6 +362,30 @@ class ApiService {
       null,
       'GET',
     );
+  }
+
+  static const String _mattersCacheKey = 'matters_v1';
+
+  /// Matters change rarely, so serve a short-lived cache to avoid refetching
+  /// on every screen that needs the matter list. Falls back to the network on
+  /// a cache miss and refreshes the cache on a successful response.
+  static Future<Map<String, dynamic>> getMattersCached({
+    bool forceRefresh = false,
+    Duration maxAge = const Duration(minutes: 15),
+  }) async {
+    if (!forceRefresh) {
+      final cached = await CacheHelper.loadEnvelope(
+        _mattersCacheKey,
+        maxAge: maxAge,
+      );
+      if (cached is Map) return Map<String, dynamic>.from(cached);
+    }
+
+    final response = await getMatters();
+    if (response['success'] == true && response['data'] != null) {
+      await CacheHelper.saveEnvelope(key: _mattersCacheKey, data: response);
+    }
+    return response;
   }
 
   // Workflow Methods

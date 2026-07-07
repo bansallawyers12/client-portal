@@ -5,6 +5,7 @@ import 'package:client/services/api_service_bansal_immigration.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../models/post_code_checker/postcode_result.dart';
 import '../../../models/post_code_checker/postcode_search_item.dart';
 import '../../../services/auth_service.dart';
@@ -22,13 +23,14 @@ class PostcodeCheckerScreen extends StatefulWidget {
 class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
   static const String _postcodeCacheKey = "postcode_all_cache";
 
-  static const _primary = Color(0xFF1A56DB);
+  static const _primary = ThemeConfig.navyBlue;
+  static const _gold = ThemeConfig.goldenYellow;
   static const _accent = Color(0xFF0E9F6E);
   static const _accentLight = Color(0xFFECFDF5);
-  static const _border = Color(0xFFE5E7EB);
-  static const _textPrimary = Color(0xFF111827);
-  static const _textSecondary = Color(0xFF6B7280);
-  static const _bg = Color(0xFFF9FAFB);
+  static const _border = Color(0xFFE2E8F0);
+  static const _textPrimary = Color(0xFF1F2937);
+  static const _textSecondary = Color(0xFF64748B);
+  static const _bg = Color(0xFFF5F7FA);
 
   final TextEditingController _controller = TextEditingController();
 
@@ -206,20 +208,33 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
       children: [
         Row(
           children: [
-            const Icon(Icons.location_on_rounded, color: _primary, size: 20),
-            const SizedBox(width: 8),
-            const Text(
-              'Australian Postcode Checker',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: _textPrimary,
-                letterSpacing: -0.3,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _gold.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.location_on_rounded,
+                color: _gold,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Australian Postcode Checker',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                  letterSpacing: -0.3,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         const Text(
           'Check if your postcode qualifies for regional area points for skilled migration visas.',
           style: TextStyle(fontSize: 13.5, color: _textSecondary, height: 1.5),
@@ -243,45 +258,61 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
-          controller: _controller,
-          onChanged: _onSearchChanged,
-          style: const TextStyle(fontSize: 14, color: _textPrimary),
-          decoration: InputDecoration(
-            hintText: 'e.g. Sydney or 2000',
-            hintStyle: const TextStyle(color: _textSecondary, fontSize: 14),
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: _primary,
-              size: 20,
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(
-                Icons.close_rounded,
-                color: _textSecondary,
-                size: 18,
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              onPressed: () {
-                _controller.clear();
-                setState(() {
-                  suggestions = [];
-                  result = null;
-                });
-              },
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 13,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: _border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: _primary, width: 1.5),
+            ],
+          ),
+          child: TextField(
+            controller: _controller,
+            onChanged: _onSearchChanged,
+            style: const TextStyle(fontSize: 14.5, color: _textPrimary),
+            decoration: InputDecoration(
+              hintText: 'e.g. Sydney or 2000',
+              hintStyle: const TextStyle(color: _textSecondary, fontSize: 14),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: _textSecondary,
+                size: 20,
+              ),
+              suffixIcon: IconButton(
+                icon: const Icon(
+                  Icons.close_rounded,
+                  color: _textSecondary,
+                  size: 18,
+                ),
+                onPressed: () {
+                  _controller.clear();
+                  setState(() {
+                    suggestions = [];
+                    result = null;
+                  });
+                },
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 15,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _primary, width: 1.5),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(color: _border),
+              ),
             ),
           ),
         ),
@@ -372,25 +403,35 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: _border),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.check_circle_outline_rounded,
-                color: _accent,
-                size: 18,
+              Container(
+                width: 4,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: _gold,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               const Text(
                 'Result',
                 style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _textPrimary,
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
                 ),
               ),
             ],

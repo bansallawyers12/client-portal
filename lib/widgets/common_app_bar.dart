@@ -57,7 +57,7 @@ class _CommonAppBarState extends State<CommonAppBar> {
 
   Future<void> _loadMatterName() async {
     try {
-      final response = await ApiService.getMatters();
+      final response = await ApiService.getMattersCached();
 
       if (response['success'] == true && response['data'] != null) {
         final matters = response['data']['matters'] as List<dynamic>;

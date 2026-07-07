@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../config/theme_config.dart';
 import '../../../models/blog.dart';
 import '../../../services/api_service_bansal_immigration.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 
 class BlogListScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class BlogListScreen extends StatefulWidget {
 }
 
 class _BlogListScreenState extends State<BlogListScreen> {
+  static const String _cacheKey = 'blog_list_page1_v1';
+
   List<Blog> _blogs = [];
   int _currentPage = 1;
   bool _isLoading = false;
@@ -23,7 +26,7 @@ class _BlogListScreenState extends State<BlogListScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchBlogs();
+    _initBlogs();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
           _scrollController.position.maxScrollExtent - 200) {
@@ -38,6 +41,59 @@ class _BlogListScreenState extends State<BlogListScreen> {
     super.dispose();
   }
 
+  // Show cached first page instantly, then refresh from network.
+  Future<void> _initBlogs() async {
+    final cached = await CacheHelper.loadEnvelope(
+      _cacheKey,
+      maxAge: const Duration(hours: 6),
+    );
+    if (cached is List && cached.isNotEmpty && mounted) {
+      setState(() {
+        _blogs = cached
+            .map<Blog>((e) => Blog.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      });
+    }
+    await _refreshFirstPage();
+  }
+
+  // Fetches page 1, replaces the list and updates the cache.
+  Future<void> _refreshFirstPage() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await ApiServiceBansalImmigration.getBlogs(
+        page: 1,
+        perPage: 10,
+      ).timeout(const Duration(seconds: 30));
+
+      if (response['success'] == true) {
+        final List list = response['data'] ?? [];
+        final blogs = list.map((e) => Blog.fromJson(e)).toList();
+        final pagination = response['pagination'] ?? {};
+
+        if (!mounted) return;
+        setState(() {
+          _blogs = blogs;
+          _hasNextPage = pagination['has_more_pages'] ?? false;
+          _currentPage = 2;
+        });
+
+        await CacheHelper.saveEnvelope(
+          key: _cacheKey,
+          data: blogs.map((b) => b.toJson()).toList(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching blogs: $e');
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+  }
+
+  // Appends the next page for infinite scroll.
   Future<void> _fetchBlogs() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -71,11 +127,10 @@ class _BlogListScreenState extends State<BlogListScreen> {
   Future<void> _onRefresh() async {
     if (!mounted) return;
     setState(() {
-      _blogs.clear();
       _currentPage = 1;
       _hasNextPage = true;
     });
-    await _fetchBlogs();
+    await _refreshFirstPage();
   }
 
   void _openDetail(int blogId) =>

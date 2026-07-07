@@ -16,6 +16,14 @@ class DocumentCategory {
       name: json['name'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'name': name,
+    };
+  }
 }
 
 class DocumentChecklist {

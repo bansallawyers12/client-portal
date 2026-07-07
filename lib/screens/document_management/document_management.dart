@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../models/new/document_category.dart';
 import '../../services/api_service.dart';
 import '../../utils/app_loader.dart';
+import '../../utils/cache_helper.dart';
 import '../../utils/responsive_utils.dart';
 
 class DocumentManagementScreen extends StatefulWidget {
@@ -38,12 +39,26 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen>
       _errorMessage = null;
     });
 
+    // Categories are reference data — seed from cache for instant display.
+    final cachedCats = await CacheHelper.loadData<DocumentCategory>(
+      'doc_categories_${type}_v1',
+      (json) => DocumentCategory.fromJson(json),
+    );
+    if (cachedCats.isNotEmpty && mounted) {
+      setState(() {
+        _categories = cachedCats;
+        _selectedCategoryId = cachedCats.first.id;
+      });
+    }
+
     try {
       final response = await ApiService.getDocumentCategories(type: type);
       final cats =
           (response['data']['categories'] as List)
               .map((json) => DocumentCategory.fromJson(json))
               .toList();
+
+      await CacheHelper.saveData(key: 'doc_categories_${type}_v1', data: cats);
 
       setState(() {
         _categories = cats;
