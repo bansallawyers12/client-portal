@@ -45,49 +45,38 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
   Future<void> _loadOccupations() async {
     final prefs = await SharedPreferences.getInstance();
 
-    setState(() => loading = true);
-
+    // Show the cached occupation list instantly (stale-while-revalidate).
+    bool hasCache = false;
     try {
       final cached = prefs.getString(_cacheKey);
-
       if (cached != null) {
         final decoded = jsonDecode(cached);
-
         final List data = decoded['data'] ?? decoded ?? [];
-
         allOccupations =
             data.map((e) => Map<String, dynamic>.from(e)).toList();
-
-        if (!mounted) return;
-
-        setState(() {
-          loading = false;
-        });
-
-        return;
+        hasCache = allOccupations.isNotEmpty;
       }
     } catch (e) {
       debugPrint("Cache error: $e");
     }
 
+    // Only block the UI with a loader when there's nothing cached to show.
+    if (mounted) setState(() => loading = !hasCache);
+
     try {
       final res = await ApiServiceBansalImmigration.getAllOccupations();
-
       final List data = res['data'] ?? [];
-
-      allOccupations =
-          data.map((e) => Map<String, dynamic>.from(e)).toList();
-
-      await prefs.setString(_cacheKey, jsonEncode(res));
+      if (data.isNotEmpty) {
+        allOccupations =
+            data.map((e) => Map<String, dynamic>.from(e)).toList();
+        await prefs.setString(_cacheKey, jsonEncode(res));
+      }
     } catch (e) {
       debugPrint("API error: $e");
     }
 
     if (!mounted) return;
-
-    setState(() {
-      loading = false;
-    });
+    setState(() => loading = false);
   }
 
   void _onSearchChanged(String value) {
@@ -376,27 +365,35 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
     );
   }
 
+  static BoxDecoration _cardDecoration() => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(14),
+    border: Border.all(color: _border),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
   Widget _buildDetails() {
     final visas = details!['visa_options'];
+    final List entries = visas is Map
+        ? visas.values.toList()
+        : (visas is List ? visas : const []);
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Occupation header card ──────────────────────────────────
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: _cardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -408,182 +405,246 @@ class _OccupationSearchScreenState extends State<OccupationSearchScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  "${details!['anzsco_code']}",
+                  "ANZSCO ${details!['anzsco_code']}",
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF9A6A00),
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "${details!['occupation_title']}",
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: _navy,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: _gold,
-                  borderRadius: BorderRadius.circular(2),
+              const SizedBox(height: 10),
+              Text(
+                "${details!['occupation_title']}",
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: _navy,
+                  letterSpacing: -0.3,
+                  height: 1.25,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'Possible Visa Options',
-                style: TextStyle(
-                  fontSize: 14.5,
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+
+        // ── Section header ──────────────────────────────────────────
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 16,
+              decoration: BoxDecoration(
+                color: _gold,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Possible Visa Options',
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: _navy,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _navy.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${entries.length}',
+                style: const TextStyle(
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: _navy,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Table(
-              border: TableBorder.all(color: _border, width: 1),
-              columnWidths: const {
-                0: FlexColumnWidth(2.5),
-                1: FlexColumnWidth(1),
-                2: FlexColumnWidth(1),
-                3: FlexColumnWidth(1),
-                4: FlexColumnWidth(1),
-                5: FlexColumnWidth(1),
-              },
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              children: [
-                _headerRow(),
-                ...visas.entries.map<TableRow>((e) => _row(e.value)).toList(),
-              ],
             ),
-          ),
-          const SizedBox(height: 14),
-          _legend(),
-        ],
-      ),
-    );
-  }
-
-  Widget _legend() {
-    Widget item(IconData icon, Color color, String label) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11.5, color: _textMuted),
+          ],
         ),
-      ],
-    );
+        const SizedBox(height: 12),
 
-    return Row(
-      children: [
-        item(Icons.check_circle, _green, 'Eligible'),
-        const SizedBox(width: 16),
-        item(Icons.cancel, _red, 'Not eligible'),
-      ],
-    );
-  }
+        // ── Visa option cards ───────────────────────────────────────
+        ...entries.map<Widget>(
+          (e) => _visaCard(Map<String, dynamic>.from(e as Map)),
+        ),
 
-  TableRow _headerRow() {
-    return TableRow(
-      decoration: BoxDecoration(color: _navy.withValues(alpha: 0.06)),
-      children: [
-        _cell('Visa Type'),
-        _cell('Eligibility'),
-        _cell('MLTSSL'),
-        _cell('STSOL'),
-        _cell('ROL'),
-        _cell('CSOL'),
+        _acronymNote(),
+        const SizedBox(height: 8),
       ],
     );
   }
 
-  TableRow _row(Map data) {
-    return TableRow(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
+  Widget _visaCard(Map<String, dynamic> data) {
+    final eligible = _asBool(data['eligibility']);
+    final statusColor = eligible ? _green : _red;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Visa type badge + name
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 30,
-                height: 30,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: _navy,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(9),
                 ),
-                alignment: Alignment.center,
                 child: Text(
-                  data['visa_type'],
-                  textAlign: TextAlign.center,
+                  '${data['visa_type']}',
                   style: const TextStyle(
-                    fontSize: 8,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  data['visa_name'],
+                  '${data['visa_name']}',
                   style: const TextStyle(
-                    fontSize: 12,
-                    color: _textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: _navy,
                     height: 1.3,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-        _iconCell(data['eligibility']),
-        _iconCell(data['MLTSSL']),
-        _iconCell(data['STSOL']),
-        _iconCell(data['ROL']),
-        _iconCell(data['CSOL']),
-      ],
-    );
-  }
+          const SizedBox(height: 12),
 
-  Widget _iconCell(bool value) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Icon(
-        value ? Icons.check_circle : Icons.cancel,
-        size: 17,
-        color: value ? _green : _red,
+          // Overall eligibility status
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  eligible ? Icons.verified_rounded : Icons.block_rounded,
+                  size: 17,
+                  color: statusColor,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  eligible ? 'Eligible to apply' : 'Not eligible',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: eligible
+                        ? const Color(0xFF047857)
+                        : const Color(0xFFB91C1C),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          const Text(
+            'SKILLED OCCUPATION LISTS',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: _textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _listChip('MLTSSL', _asBool(data['MLTSSL'])),
+              _listChip('STSOL', _asBool(data['STSOL'])),
+              _listChip('ROL', _asBool(data['ROL'])),
+              _listChip('CSOL', _asBool(data['CSOL'])),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  static Widget _cell(String text) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: _navy,
-        ),
+  Widget _listChip(String label, bool value) {
+    final color = value ? _green : _red;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            value ? Icons.check_circle : Icons.cancel,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: value ? const Color(0xFF047857) : const Color(0xFFB91C1C),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _acronymNote() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _navy.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 15, color: _textMuted),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'MLTSSL, STSOL, ROL and CSOL are the skilled occupation lists '
+              'this occupation may appear on for each visa.',
+              style: TextStyle(fontSize: 11.5, color: _textMuted, height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _asBool(dynamic v) {
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    if (v is String) return v == '1' || v.toLowerCase() == 'true';
+    return false;
   }
 }

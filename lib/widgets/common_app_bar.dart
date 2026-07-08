@@ -107,7 +107,7 @@ class _CommonAppBarState extends State<CommonAppBar> {
       surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(28),
+          bottom: Radius.circular(18),
         ),
       ),
       iconTheme: const IconThemeData(color: Colors.white),

@@ -6,9 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../config/theme_config.dart';
-import '../../services/auth_service.dart';
 import '../../utils/app_loader.dart';
-import '../common_app_bar.dart';
 
 class UniversalWebView extends StatefulWidget {
   final String url;
@@ -30,11 +28,19 @@ class _UniversalWebViewState extends State<UniversalWebView>
     with SingleTickerProviderStateMixin {
   late final WebViewController _controller;
 
-  int _progress = 0;
   bool _isLoading = true;
+  bool _hasError = false;
 
   late AnimationController _animationController;
   late Animation<double> _progressAnimation;
+
+  String get _host {
+    try {
+      return Uri.parse(widget.url).host;
+    } catch (_) {
+      return '';
+    }
+  }
 
   @override
   void initState() {
@@ -68,7 +74,12 @@ class _UniversalWebViewState extends State<UniversalWebView>
             },
             onPageStarted: (_) {
               _updateProgress(0);
-              setState(() => _isLoading = true);
+              if (mounted) {
+                setState(() {
+                  _isLoading = true;
+                  _hasError = false;
+                });
+              }
             },
             onPageFinished: (_) {
               _updateProgress(100);
@@ -76,10 +87,183 @@ class _UniversalWebViewState extends State<UniversalWebView>
                 if (mounted) setState(() => _isLoading = false);
               });
             },
+            onWebResourceError: (error) {
+              // Only surface errors for the main document, not sub-resources.
+              if ((error.isForMainFrame ?? true) && mounted) {
+                setState(() {
+                  _hasError = true;
+                  _isLoading = false;
+                });
+              }
+            },
           ),
         )
+        // The platform WebView keeps an HTTP cache by default, so revisiting a
+        // link loads from cache first and only revalidates over the network.
         ..loadRequest(Uri.parse(widget.url));
     }
+  }
+
+  Future<void> _reload() async {
+    if (mounted) {
+      setState(() {
+        _hasError = false;
+        _isLoading = true;
+      });
+    }
+    _updateProgress(0);
+    await _controller.reload();
+  }
+
+  Future<void> _openExternally() async {
+    final uri = Uri.parse(widget.url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the link.')),
+      );
+    }
+  }
+
+  PreferredSizeWidget _appBar(double progress) {
+    return AppBar(
+      backgroundColor: ThemeConfig.goldenYellow,
+      foregroundColor: Colors.white,
+      elevation: 2,
+      surfaceTintColor: Colors.transparent,
+      titleSpacing: 0,
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          if (_host.isNotEmpty)
+            Row(
+              children: [
+                const Icon(Icons.lock_rounded, size: 10, color: Colors.white70),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    _host,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: 'Reload',
+          icon: const Icon(Icons.refresh_rounded),
+          onPressed: _reload,
+        ),
+        IconButton(
+          tooltip: 'Open in browser',
+          icon: const Icon(Icons.open_in_new_rounded),
+          onPressed: _openExternally,
+        ),
+      ],
+      bottom: _isLoading
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(3),
+              child: LinearProgressIndicator(
+                value: progress == 0 ? null : progress,
+                minHeight: 3,
+                backgroundColor: Colors.white.withValues(alpha: 0.25),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  ThemeConfig.navyBlue,
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _errorView() {
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.cloud_off_rounded,
+                  size: 52,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                "Couldn't load this page",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: ThemeConfig.navyBlue,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please check your internet connection and try again.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13.5,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  label: const Text('Try Again'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ThemeConfig.navyBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: _reload,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: _openExternally,
+                child: const Text('Open in browser instead'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _updateProgress(int newProgress) {
@@ -103,31 +287,29 @@ class _UniversalWebViewState extends State<UniversalWebView>
 
   @override
   Widget build(BuildContext context) {
+    final double smoothValue = _progressAnimation.value;
+
     if (kIsWeb) {
       return Scaffold(
-        appBar: CommonAppBar(
-          titleName: widget.title,
-          matterID: AuthService.selectedMatterId,
-        ),
+        appBar: _appBar(smoothValue),
         body: _WebFallbackView(url: widget.url, title: widget.title),
       );
     }
 
-    final double smoothValue = _progressAnimation.value;
     final double scale = 0.85 + (smoothValue * 0.35);
 
     return Scaffold(
-      appBar: CommonAppBar(
-        titleName: widget.title,
-        matterID: AuthService.selectedMatterId,
-      ),
+      backgroundColor: Colors.white,
+      appBar: _appBar(smoothValue),
       body: Stack(
         children: [
           Positioned.fill(
             child: WebViewWidget(controller: _controller),
           ),
 
-          if (_isLoading)
+          if (_hasError)
+            Positioned.fill(child: _errorView())
+          else if (_isLoading)
             Positioned.fill(
               child: Container(
                 color: Colors.white,

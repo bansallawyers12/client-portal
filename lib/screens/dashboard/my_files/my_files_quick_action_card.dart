@@ -106,6 +106,7 @@ class MyFilesQuickActionsCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _actionTile(context: context, action: actions[0]),
                         const SizedBox(height: 14),

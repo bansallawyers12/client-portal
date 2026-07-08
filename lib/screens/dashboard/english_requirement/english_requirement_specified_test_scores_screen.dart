@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common_app_bar.dart';
+
+const Color _navy = ThemeConfig.navyBlue;
+const Color _gold = ThemeConfig.goldenYellow;
+const Color _border = Color(0xFFE2E8F0);
+const Color _textPrimary = Color(0xFF1F2937);
+const Color _textMuted = Color(0xFF64748B);
+const Color _goldText = Color(0xFF9A6A00);
 
 class EnglishRequirementSpecifiedTestScoresScreen extends StatelessWidget {
   const EnglishRequirementSpecifiedTestScoresScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final testData = _testData();
-
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF5F7FA),
       /*appBar: AppBar(
         title: const Text(
           "English Requirement for Specified Test Scores",
@@ -40,73 +46,6 @@ class EnglishRequirementSpecifiedTestScoresScreen extends StatelessWidget {
     );
   }
 
-  List<Map<String, dynamic>> _testData() {
-    return [
-      {
-        "item": "1",
-        "testName": "C1 Advanced",
-        "col2": "Overall band score of 161",
-        "col3": "Not accepted",
-        "col4": "Not accepted",
-      },
-      {
-        "item": "2",
-        "testName": "CELPIP General",
-        "col2": "Overall band score of 7",
-        "col3": "Overall band score of 6",
-        "col4": "Overall band score of 5",
-      },
-      {
-        "item": "3",
-        "testName": "IELTS Academic",
-        "col2": "Average band score of 6.0",
-        "col3": "Average band score of 5.5",
-        "col4": "Average band score of 5.0",
-      },
-      {
-        "item": "4",
-        "testName": "IELTS General Training",
-        "col2": "Average band score of 6.0",
-        "col3": "Average band score of 5.5",
-        "col4": "Average band score of 5.0",
-      },
-      {
-        "item": "5",
-        "testName": "LanguageCert Academic",
-        "col2": "Overall band score of 61",
-        "col3": "Overall band score of 54",
-        "col4": "Overall band score of 46",
-      },
-      {
-        "item": "6",
-        "testName": "MET",
-        "col2": "Overall band score of 53",
-        "col3": "Overall band score of 49",
-        "col4": "Overall band score of 44",
-      },
-      {
-        "item": "7",
-        "testName": "OET",
-        "col2": "Overall band score of 1210",
-        "col3": "Overall band score of 1090",
-        "col4": "Overall band score of 1020",
-      },
-      {
-        "item": "8",
-        "testName": "PTE Academic",
-        "col2": "Overall band score of 47",
-        "col3": "Overall band score of 39",
-        "col4": "Overall band score of 31",
-      },
-      {
-        "item": "9",
-        "testName": "TOEFL iBT",
-        "col2": "Total band score of 67",
-        "col3": "Total band score of 51",
-        "col4": "Total band score of 37",
-      },
-    ];
-  }
 }
 
 class EnglishLanguageRequirementsWidget extends StatefulWidget {
@@ -143,146 +82,224 @@ class _EnglishLanguageRequirementsWidgetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
                   "English Language Requirements",
                   style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
+                    fontWeight: FontWeight.w800,
+                    color: _navy,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 4),
                 Text(
-                  "Specified Test Scores for Visa Requirements",
-                  style: TextStyle(fontSize: 14, color: Colors.indigoAccent),
+                  "Specified test scores for visa requirements",
+                  style: TextStyle(fontSize: 13, color: _textMuted),
                 ),
               ],
             ),
           ),
+
+          // ── Effective date toggle ─────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.indigo.shade100),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.indigo.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+            child: _labeledCard(
+              label: "EFFECTIVE DATE",
+              child: Row(
                 children: [
-                  ChoiceChip(
-                    label: const Text("After 7 Aug 2025"),
-                    selected: selectedTab == 0,
-                    selectedColor: Colors.indigo.shade100,
-                    backgroundColor: Colors.grey.shade100,
-                    labelStyle: TextStyle(
-                      color: selectedTab == 0 ? Colors.indigo : Colors.black87,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: _segment(
+                      "After 7 Aug 2025",
+                      selectedTab == 0,
+                      () => setState(() => selectedTab = 0),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      side: BorderSide(color: Colors.indigo.shade100),
-                    ),
-                    onSelected: (_) => setState(() => selectedTab = 0),
                   ),
-                  ChoiceChip(
-                    label: const Text("Before 6 Aug 2025"),
-                    selected: selectedTab == 1,
-                    selectedColor: Colors.indigo.shade100,
-                    backgroundColor: Colors.grey.shade100,
-                    labelStyle: TextStyle(
-                      color: selectedTab == 1 ? Colors.indigo : Colors.black87,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _segment(
+                      "Before 6 Aug 2025",
+                      selectedTab == 1,
+                      () => setState(() => selectedTab = 1),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      side: BorderSide(color: Colors.indigo.shade100),
-                    ),
-                    onSelected: (_) => setState(() => selectedTab = 1),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 12),
+
+          // ── Proficiency level selector ────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.indigo.shade200),
-              ),
+            child: _labeledCard(
+              label: "PROFICIENCY LEVEL",
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: List.generate(levelTabs.length, (index) {
-                  return ChoiceChip(
-                    label: Text(levelTabs[index]),
-                    selected: selectedLevelTab == index,
-                    selectedColor: Colors.indigo,
-                    backgroundColor: Colors.white,
-                    labelStyle: TextStyle(
-                      color:
-                          selectedLevelTab == index
-                              ? Colors.white
-                              : Colors.indigo,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.indigo.shade200),
-                    ),
-                    onSelected: (_) => setState(() => selectedLevelTab = index),
+                  return _levelChip(
+                    levelTabs[index],
+                    selectedLevelTab == index,
+                    () => setState(() => selectedLevelTab = index),
                   );
                 }),
               ),
             ),
           ),
           const SizedBox(height: 16),
+
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: groupedData.length,
-              itemBuilder: (context, index) {
-                final group = groupedData[index];
-                return _buildGroupedCard(group);
-              },
-            ),
+            child: groupedData.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No test scores for this selection.",
+                      style: TextStyle(color: _textMuted, fontSize: 13),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    itemCount: groupedData.length,
+                    itemBuilder: (context, index) {
+                      final group = groupedData[index];
+                      return _buildGroupedCard(group);
+                    },
+                  ),
           ),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              "Department of Home Affairs - English language visa requirements",
-              style: TextStyle(
-                color: Colors.indigo,
-                fontSize: 13,
-                decoration: TextDecoration.underline,
-              ),
+
+          // ── Source footnote ───────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.link_rounded, size: 15, color: _textMuted),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "Source: Department of Home Affairs — English language visa requirements",
+                    style: TextStyle(
+                      color: _textMuted,
+                      fontSize: 11.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _labeledCard({required String label, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: _textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _segment(String text, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? _navy : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: selected ? _navy : _border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              const Icon(Icons.check_rounded, size: 15, color: Colors.white),
+              const SizedBox(width: 5),
+            ],
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? Colors.white : _textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _levelChip(String text, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? _gold.withValues(alpha: 0.18) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? _gold : _border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              const Icon(Icons.check_rounded, size: 14, color: _goldText),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? _goldText : _textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -291,68 +308,95 @@ class _EnglishLanguageRequirementsWidgetState
     final List<Map<String, String>> values =
         (group["values"] as List).cast<Map<String, String>>();
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      shadowColor: Colors.indigo.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              group["title"],
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: Colors.indigo,
-              ),
-            ),
-            if ((group["subtitle"] as String).isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 4, bottom: 10),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: _navy.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Text(
-                  group["subtitle"],
+                  group["title"],
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
                     fontSize: 13,
-                    color: Colors.black87,
+                    color: _navy,
                   ),
                 ),
-              )
-            else
-              const SizedBox(height: 10),
-            ...values.map(
-              (item) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        "${item["label"]}:",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          color: Colors.black87,
-                        ),
-                      ),
+              ),
+              if ((group["subtitle"] as String).isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    group["subtitle"],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: _textMuted,
                     ),
-                    Expanded(
-                      flex: 5,
-                      child: Text(
-                        item["value"] ?? "",
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...values.map(
+            (item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      "${item["label"]}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                        color: _textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      item["value"] ?? "",
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: _textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

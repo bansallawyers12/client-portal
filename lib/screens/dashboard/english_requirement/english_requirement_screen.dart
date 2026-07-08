@@ -47,19 +47,20 @@ class EnglishRequirementScreen extends StatelessWidget {
         matterID: AuthService.selectedMatterId,
       ),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: AppResponsive.maxContentWidth,
             ),
             child: SingleChildScrollView(
-              padding: AppResponsive.pagePadding(context),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 children:
                     links
                         .map(
                           (link) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.only(bottom: 12),
                             child: _linkTile(context, link),
                           ),
                         )

@@ -32,6 +32,42 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
 
   Map<AdditionalPointItem, bool> additionalPoints = {};
 
+  static const int _eligibilityThreshold = 60;
+  bool _congratsShown = false;
+
+  int get _liveTotal {
+    int total = 0;
+    if (age != null) total += age!.value;
+    if (english != null) total += english!.value;
+    if (education != null) total += education!.value;
+    if (overseasExp != null) total += overseasExp!.value;
+    if (ausExp != null) total += ausExp!.value;
+    if (partner != null) total += partner!.value;
+    additionalPoints.forEach((k, v) {
+      if (v) total += k.value;
+    });
+    return total;
+  }
+
+  /// Applies a selection change, then checks whether the eligibility
+  /// milestone has been reached so the congratulations popup can appear.
+  void _selectAndCheck(VoidCallback apply) {
+    setState(apply);
+
+    final total = _liveTotal;
+    if (total >= _eligibilityThreshold) {
+      if (!_congratsShown) {
+        _congratsShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showCongratsDialog(total);
+        });
+      }
+    } else {
+      // Allow the popup to trigger again if they drop below and cross back.
+      _congratsShown = false;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -203,66 +239,78 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
           ),
           const SizedBox(height: 18),
           _infoBox(),
+          const SizedBox(height: 16),
+          _livePointsBar(),
           const SizedBox(height: 22),
 
+          // Fields are revealed one at a time as each is answered.
           _buildDropdown<PointItem>(
             "Age (at time of invitation)",
             data!.age,
             age,
-            (v) => setState(() => age = v),
+            (v) => _selectAndCheck(() => age = v),
           ),
-          _buildDropdown<PointItem>(
-            "English Language Proficiency",
-            data!.englishLanguage,
-            english,
-            (v) => setState(() => english = v),
-            helper:
-                "IELTS 6/PTE 50 = Competent, IELTS 7/PTE 65 = Proficient, IELTS 8/PTE 79 = Superior",
-          ),
-          _buildDropdown<PointItem>(
-            "Educational Qualifications",
-            data!.education,
-            education,
-            (v) => setState(() => education = v),
-            helper:
-                "Qualification must be recognized by the relevant assessing authority",
-          ),
-          _buildDropdown<PointItem>(
-            "Skilled Employment Experience (Overseas)",
-            data!.overseasExp,
-            overseasExp,
-            (v) => setState(() => overseasExp = v),
-          ),
-          _buildDropdown<PointItem>(
-            "Skilled Employment Experience (Australia)",
-            data!.australiaExp,
-            ausExp,
-            (v) => setState(() => ausExp = v),
-          ),
+          if (age != null)
+            _buildDropdown<PointItem>(
+              "English Language Proficiency",
+              data!.englishLanguage,
+              english,
+              (v) => _selectAndCheck(() => english = v),
+              helper:
+                  "IELTS 6/PTE 50 = Competent, IELTS 7/PTE 65 = Proficient, IELTS 8/PTE 79 = Superior",
+            ),
+          if (english != null)
+            _buildDropdown<PointItem>(
+              "Educational Qualifications",
+              data!.education,
+              education,
+              (v) => _selectAndCheck(() => education = v),
+              helper:
+                  "Qualification must be recognized by the relevant assessing authority",
+            ),
+          if (education != null)
+            _buildDropdown<PointItem>(
+              "Skilled Employment Experience (Overseas)",
+              data!.overseasExp,
+              overseasExp,
+              (v) => _selectAndCheck(() => overseasExp = v),
+            ),
+          if (overseasExp != null)
+            _buildDropdown<PointItem>(
+              "Skilled Employment Experience (Australia)",
+              data!.australiaExp,
+              ausExp,
+              (v) => _selectAndCheck(() => ausExp = v),
+            ),
 
-          const SizedBox(height: 8),
-          _sectionHeader("Additional Points"),
-          const SizedBox(height: 12),
-          ...additionalPoints.entries.map((e) {
-            return _pointTile(
-              e.key.label,
-              e.value,
-              e.key.value,
-              (v) => setState(() => additionalPoints[e.key] = v),
-              subtitle: e.key.description ?? e.key.note,
-            );
-          }),
+          if (ausExp != null) ...[
+            const SizedBox(height: 8),
+            _sectionHeader("Additional Points"),
+            const SizedBox(height: 12),
+            ...additionalPoints.entries.map((e) {
+              return _pointTile(
+                e.key.label,
+                e.value,
+                e.key.value,
+                (v) => _selectAndCheck(() => additionalPoints[e.key] = v),
+                subtitle: e.key.description ?? e.key.note,
+              );
+            }),
 
-          const SizedBox(height: 20),
-          _buildDropdown<PointItem>(
-            "Partner / Spouse Status",
-            data!.partnerStatus,
-            partner,
-            (v) => setState(() => partner = v),
-          ),
+            const SizedBox(height: 20),
+            _buildDropdown<PointItem>(
+              "Partner / Spouse Status",
+              data!.partnerStatus,
+              partner,
+              (v) => _selectAndCheck(() => partner = v),
+            ),
 
-          const SizedBox(height: 24),
-          _ctaButton(),
+            const SizedBox(height: 24),
+            _ctaButton(),
+          ] else ...[
+            const SizedBox(height: 4),
+            _nextStepHint(),
+          ],
         ],
       ),
     );
@@ -349,6 +397,192 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _livePointsBar() {
+    final total = _liveTotal;
+    final reached = total >= _eligibilityThreshold;
+    final progress = (total / _eligibilityThreshold).clamp(0.0, 1.0);
+    const green = Color(0xFF27AE60);
+    final accent = reached ? green : _gold;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(
+                reached
+                    ? Icons.emoji_events_rounded
+                    : Icons.trending_up_rounded,
+                size: 18,
+                color: reached ? green : const Color(0xFF9A6A00),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  reached
+                      ? "You've reached the minimum points!"
+                      : "Your current points",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: reached ? const Color(0xFF1E7E45) : _navy,
+                  ),
+                ),
+              ),
+              Text(
+                "$total / $_eligibilityThreshold",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: reached ? const Color(0xFF1E7E45) : _navy,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.white,
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _nextStepHint() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.arrow_upward_rounded,
+          size: 15,
+          color: _textMuted.withValues(alpha: 0.8),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          "Answer each field to continue",
+          style: TextStyle(
+            fontSize: 12.5,
+            color: _textMuted,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCongratsDialog(int total) {
+    const green = Color(0xFF27AE60);
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [green, Color(0xFF2ECC71)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events_rounded,
+                      color: Colors.white,
+                      size: 44,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    "Congratulations!",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "You've reached $total points",
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    "You now meet the minimum 60 points required to be eligible "
+                    "to submit an Expression of Interest (EOI) for skilled migration.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _textMuted,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _navy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        "Continue",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

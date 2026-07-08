@@ -127,33 +127,128 @@ class _VisaEstimateScreenState extends State<VisaEstimateScreen> {
     }
   }
 
-  Widget _tableRow({
+  static const Color _navy = ThemeConfig.navyBlue;
+  static const Color _gold = ThemeConfig.goldenYellow;
+  static const Color _border = Color(0xFFE2E8F0);
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _textMuted = Color(0xFF64748B);
+  static const Color _goldText = Color(0xFF9A6A00);
+
+  BoxDecoration get _cardDecoration => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(color: _border),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.04),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  Widget _sectionHeader(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: _gold,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14.5,
+            fontWeight: FontWeight.w700,
+            color: _navy,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _infoRow(String number, String label, String price, {bool last = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        border: last ? null : const Border(bottom: BorderSide(color: _border)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _navy.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              number,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _navy,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13.5, color: _textPrimary),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            price,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: _navy,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _feeRow({
     required Widget left,
     required Widget right,
-    Color? bg,
     bool bold = false,
+    Color? tint,
   }) {
     return Container(
-      width: double.infinity,
-      color: bg ?? Colors.grey.shade200,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: tint,
+        border: const Border(bottom: BorderSide(color: _border)),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: DefaultTextStyle(
               style: TextStyle(
-                color: Colors.black,
+                color: _textPrimary,
                 fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 15,
+                fontSize: 14,
+                height: 1.3,
               ),
               child: left,
             ),
           ),
+          const SizedBox(width: 12),
           DefaultTextStyle(
             style: TextStyle(
-              color: Colors.black,
-              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-              fontSize: 15,
+              color: _navy,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+              fontSize: 14.5,
             ),
             child: right,
           ),
@@ -163,46 +258,58 @@ class _VisaEstimateScreenState extends State<VisaEstimateScreen> {
   }
 
   Widget _counterBox(int value, Function(int) onChanged) {
+    Widget btn(IconData icon, VoidCallback? onTap) {
+      final enabled = onTap != null;
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: 18,
+            color: enabled ? _navy : _textMuted.withValues(alpha: 0.4),
+          ),
+        ),
+      );
+    }
+
     return Container(
-      height: 38,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade400),
-        borderRadius: BorderRadius.circular(6),
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
+        border: Border.all(color: _border),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            iconSize: 20,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            onPressed:
-                value > 0
-                    ? () async {
-                      onChanged(value - 1);
-                      await _calculateEstimate();
-                    }
-                    : null,
-            icon: const Icon(Icons.remove),
+          btn(
+            Icons.remove_rounded,
+            value > 0
+                ? () async {
+                    onChanged(value - 1);
+                    await _calculateEstimate();
+                  }
+                : null,
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+          Container(
+            width: 40,
+            alignment: Alignment.center,
             child: Text(
               value.toString(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: _textPrimary,
+              ),
             ),
           ),
-          IconButton(
-            iconSize: 20,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            onPressed: () async {
-              onChanged(value + 1);
-              await _calculateEstimate();
-            },
-            icon: const Icon(Icons.add),
-          ),
+          btn(Icons.add_rounded, () async {
+            onChanged(value + 1);
+            await _calculateEstimate();
+          }),
         ],
       ),
     );
@@ -210,19 +317,41 @@ class _VisaEstimateScreenState extends State<VisaEstimateScreen> {
 
   Widget _paymentSelector() {
     return Wrap(
-      spacing: 12,
+      spacing: 10,
+      runSpacing: 10,
       children: List.generate(paymentMethods.length, (index) {
-        return ChoiceChip(
-          label: Text(paymentMethods[index]),
-          selected: selectedPaymentIndex == index,
-          selectedColor: ThemeConfig.goldenYellow.withValues(alpha: 0.3),
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: Colors.black),
-          onSelected: (val) {
-            setState(() {
-              selectedPaymentIndex = index;
-            });
-          },
+        final selected = selectedPaymentIndex == index;
+        return GestureDetector(
+          onTap: () => setState(() => selectedPaymentIndex = index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? _gold.withValues(alpha: 0.18) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: selected ? _gold : _border,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selected) ...[
+                  const Icon(Icons.check_rounded, size: 15, color: _goldText),
+                  const SizedBox(width: 5),
+                ],
+                Text(
+                  paymentMethods[index],
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? _goldText : _textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       }),
     );
@@ -233,141 +362,166 @@ class _VisaEstimateScreenState extends State<VisaEstimateScreen> {
     final currency = estimate?['currency'] ?? "AUD";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: CommonAppBar(
         titleName: "Visa Estimate",
         matterID: AuthService.selectedMatterId,
       ),
       body: SafeArea(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: AppResponsive.maxContentWidth,
-          ),
-          child: SingleChildScrollView(
-            padding: AppResponsive.pagePadding(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Top info table (hidden entirely for 147 & 148) ─────
-                if (!_isSimpleVisa) ...[
-                  const Text(
-                    "for any other applicant:",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(8),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppResponsive.maxContentWidth,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Reference charges (hidden entirely for 147 & 148) ──
+                  if (!_isSimpleVisa) ...[
+                    _sectionHeader("Charges for additional applicants"),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: _cardDecoration,
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          _infoRow(
+                            "1",
+                            "Base application charge",
+                            "$currency $topBaseCharge",
+                          ),
+                          _infoRow(
+                            "2",
+                            "Additional applicant (18 or over)",
+                            "$currency $topAdultCharge",
+                          ),
+                          _infoRow(
+                            "3",
+                            "Additional applicant (under 18)",
+                            "$currency $topChildCharge",
+                            last: true,
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 26),
+                  ],
+
+                  // ── Payable fees & surcharge (always visible) ──────────
+                  _sectionHeader("Payable fees & surcharge"),
+                  const SizedBox(height: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Text(
+                      "Select a payment method to see the applicable surcharge.",
+                      style: TextStyle(fontSize: 12.5, color: _textMuted),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  _paymentSelector(),
+                  const SizedBox(height: 18),
+
+                  Container(
+                    decoration: _cardDecoration,
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
-                        _tableRow(
-                          left: const Text("1  Base application charge"),
-                          right: Text("$currency $topBaseCharge"),
+                        // Base charge — always shown
+                        _feeRow(
+                          left: const Text("Base application charge"),
+                          right: Text("$currency $baseCharge"),
                         ),
-                        _tableRow(
-                          left: const Text(
-                            "2  Additional applicant charge >= 18",
+
+                        // Additional rows — hidden for 147 & 148
+                        if (!_isSimpleVisa) ...[
+                          _feeRow(
+                            left: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Additional applicant (18 or over)",
+                                ),
+                                const SizedBox(height: 10),
+                                _counterBox(
+                                  adultCount,
+                                  (v) => setState(() => adultCount = v),
+                                ),
+                              ],
+                            ),
+                            right: Text("$currency $additionalAdultCharge"),
                           ),
-                          right: Text("$currency $topAdultCharge"),
+                          _feeRow(
+                            left: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text("Additional applicant (under 18)"),
+                                const SizedBox(height: 10),
+                                _counterBox(
+                                  childCount,
+                                  (v) => setState(() => childCount = v),
+                                ),
+                              ],
+                            ),
+                            right: Text("$currency $additionalChildCharge"),
+                          ),
+                        ],
+
+                        // Subtotal & surcharge
+                        _feeRow(
+                          left: const Text("Subtotal"),
+                          right: Text("$currency $subtotal"),
+                          bold: true,
+                          tint: const Color(0xFFF8FAFC),
                         ),
-                        _tableRow(
-                          left: const Text(
-                            "3  Additional applicant charge < 18",
+                        _feeRow(
+                          left: Text(
+                            "Surcharge (+${(surchargeRates[selectedPaymentIndex] * 100).toStringAsFixed(2)}%)",
                           ),
-                          right: Text("$currency $topChildCharge"),
+                          right: Text(
+                            "$currency ${surchargeAmount.toStringAsFixed(2)}",
+                          ),
+                          tint: const Color(0xFFF8FAFC),
+                        ),
+
+                        // Total — highlighted
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          color: _navy,
+                          child: Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  "Total payable",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                "$currency ${finalTotal.toStringAsFixed(2)}",
+                                style: const TextStyle(
+                                  color: _gold,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 30),
                 ],
-
-                // ── PAYABLE FEES & SURCHARGE (always visible) ──────────
-                const Text(
-                  "PAYABLE FEES & SURCHARGE",
-                  style: TextStyle(
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                _paymentSelector(),
-                const SizedBox(height: 16),
-
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      // Base charge — always shown
-                      _tableRow(
-                        left: const Text("Base application charge"),
-                        right: Text("$currency $baseCharge"),
-                      ),
-
-                      // Additional rows — hidden for 147 & 148
-                      if (!_isSimpleVisa) ...[
-                        _tableRow(
-                          left: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Additional applicant charge >= 18"),
-                              const SizedBox(height: 8),
-                              _counterBox(
-                                adultCount,
-                                (v) => setState(() => adultCount = v),
-                              ),
-                            ],
-                          ),
-                          right: Text("$currency $additionalAdultCharge"),
-                        ),
-                        _tableRow(
-                          left: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text("Additional applicant charge < 18"),
-                              const SizedBox(height: 8),
-                              _counterBox(
-                                childCount,
-                                (v) => setState(() => childCount = v),
-                              ),
-                            ],
-                          ),
-                          right: Text("$currency $additionalChildCharge"),
-                        ),
-                      ],
-
-                      // Subtotal, surcharge, total — always shown
-                      _tableRow(
-                        left: const Text("Subtotal"),
-                        right: Text("$currency $subtotal"),
-                        bold: true,
-                      ),
-                      _tableRow(
-                        left: Text(
-                          "Surcharge (+ ${(surchargeRates[selectedPaymentIndex] * 100).toStringAsFixed(2)}%)",
-                        ),
-                        right: Text(
-                          "$currency ${surchargeAmount.toStringAsFixed(2)}",
-                        ),
-                      ),
-                      _tableRow(
-                        left: const Text("TOTAL"),
-                        right: Text(
-                          "$currency ${finalTotal.toStringAsFixed(2)}",
-                        ),
-                        bold: true,
-                        bg: Colors.grey.shade300,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
