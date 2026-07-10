@@ -26,6 +26,15 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
   bool _isListening = false;
   bool _speechAvailable = false;
 
+  // Quick-reply suggestions shown before first user message
+  bool _showQuickReplies = true;
+  final List<String> _quickReplies = [
+    '🛂 What visa options are available for me?',
+    '📋 What documents do I need for my application?',
+    '⏱️ How long does the immigration process take?',
+    '📅 How can I book a consultation appointment?',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +76,8 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty || _isLoading) return;
+    // Hide quick replies once user sends any message
+    if (_showQuickReplies) setState(() => _showQuickReplies = false);
 
     if (_isListening) {
       await _speech.stop();
@@ -300,6 +311,82 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
     );
   }
 
+  Widget _buildQuickReplies() {
+    return Container(
+      color: const Color(0xFFECEFF1),
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              'Quick questions — tap to ask:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          ...List.generate(_quickReplies.length, (i) {
+            final q = _quickReplies[i];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: GestureDetector(
+                onTap: _isLoading ? null : () => _sendMessage(q),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: ThemeConfig.goldenYellow.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          q,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: ThemeConfig.goldenYellow,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -340,7 +427,10 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
                     },
                   ),
                 ),
-                _buildTextComposer(),
+                // Quick-reply chips — visible only before first user message
+                if (_showQuickReplies) _buildQuickReplies(),
+                // Chat input — hidden until user taps a quick question
+                if (!_showQuickReplies) _buildTextComposer(),
               ],
             ),
           ),
