@@ -16,15 +16,19 @@
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <!-- LaunchImage already contains white circle + logo baked in -->
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
                             </imageView>
                         </subviews>
+                        <!-- Soft off-white background matching Flutter splash -->
                         <color key="backgroundColor" red="0.960784314" green="0.968627451" blue="0.980392157" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <!-- Center the image -->
                             <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1a2-6s-vTC"/>
                             <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4X2-HB-R7a"/>
-                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="width" constant="120" id="Wid-im-age"/>
-                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="height" constant="120" id="Hgt-im-age"/>
+                            <!-- Fixed size: 150x150pt matches Android circle size -->
+                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="width" constant="150" id="Wid-im-age"/>
+                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="height" constant="150" id="Hgt-im-age"/>
                         </constraints>
                     </view>
                 </viewController>

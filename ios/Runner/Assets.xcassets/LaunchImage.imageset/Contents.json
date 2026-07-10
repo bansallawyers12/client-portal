@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "App Icon For ios image (1024×1024 PNG).png",
+      "filename" : "LaunchImage.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "App Icon For ios image (1024×1024 PNG)@2x.png",
+      "filename" : "LaunchImage@2x.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "App Icon For ios image (1024×1024 PNG)@3x.png",
+      "filename" : "LaunchImage@3x.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
