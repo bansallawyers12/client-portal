@@ -104,24 +104,131 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     await fetchNotifications();
   }
 
-  String _formatDate(DateTime dateTime) {
-    return DateFormat('MMM dd, yyyy • hh:mm a').format(dateTime);
+  // Flattens notifications into a list of section-header strings and items.
+  List<Object> _buildRows() {
+    final rows = <Object>[];
+    String? lastLabel;
+    for (final n in notifications) {
+      final label = _dateGroupLabel(n.createdAt);
+      if (label != lastLabel) {
+        rows.add(label);
+        lastLabel = label;
+      }
+      rows.add(n);
+    }
+    return rows;
+  }
+
+  String _dateGroupLabel(DateTime dt) {
+    final now = DateTime.now();
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    if (diff < 7) return DateFormat('EEEE').format(dt);
+    return DateFormat('MMMM d, yyyy').format(dt);
+  }
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return DateFormat('MMM dd, yyyy').format(dt);
+  }
+
+  Widget _dateHeader(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF94A3B8),
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  // Maps a notification type to a meaningful icon + accent color.
+  (IconData, Color) _visualForType(String type) {
+    switch (type.trim()) {
+      case 'message':
+        return (Icons.chat_bubble_rounded, const Color(0xFF3B82F6));
+      case 'stage_change':
+        return (Icons.swap_horiz_rounded, const Color(0xFF8B5CF6));
+      case 'checklist':
+      case 'checklist_added':
+        return (Icons.checklist_rounded, const Color(0xFFF59E0B));
+      case 'document_approved':
+        return (Icons.verified_rounded, const Color(0xFF10B981));
+      case 'document_rejected':
+      case 'document_deleted':
+        return (Icons.report_gmailerrorred_rounded, const Color(0xFFEF4444));
+      case 'document_downloaded':
+        return (Icons.download_rounded, const Color(0xFF0EA5E9));
+      case 'invoice_sent_to_client_app':
+        return (Icons.receipt_long_rounded, const Color(0xFF14B8A6));
+      case 'detail_approved':
+      case 'detail_rejected':
+        return (Icons.person_rounded, const Color(0xFF6366F1));
+      case 'matter_discontinued':
+        return (Icons.pause_circle_filled_rounded, const Color(0xFFEF4444));
+      case 'matter_reopened':
+        return (Icons.play_circle_fill_rounded, const Color(0xFF10B981));
+      case 'action_completed':
+        return (Icons.task_alt_rounded, const Color(0xFF10B981));
+      case 'lead_converted_to_client':
+        return (Icons.how_to_reg_rounded, const Color(0xFF10B981));
+      default:
+        return (Icons.notifications_rounded, ThemeConfig.primaryColor);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDesktop = AppResponsive.isDesktop(context);
 
+    final int unreadCount = notifications.where((n) => !n.isRead).length;
+
     return Scaffold(
-      backgroundColor: ThemeConfig.backgroundLight,
+      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        backgroundColor: ThemeConfig.goldenYellow.withValues(alpha: 0.9),
-        title: const Text(
-          "Notifications",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
+        backgroundColor: ThemeConfig.goldenYellow,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
-        elevation: 2,
+        titleSpacing: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Notifications",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                letterSpacing: -0.2,
+              ),
+            ),
+            Text(
+              unreadCount > 0
+                  ? '$unreadCount unread'
+                  : "You're all caught up",
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w400,
+                fontSize: 11.5,
+              ),
+            ),
+          ],
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -175,22 +282,29 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                             ],
                           ),
                         )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          itemCount: notifications.length + (hasMore ? 1 : 0),
-                          padding: AppResponsive.horizontalPadding(
-                            context,
-                          ).copyWith(top: 10, bottom: 24),
-                          itemBuilder: (context, index) {
-                            if (index == notifications.length) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(child: AppLoader()),
-                              );
-                            }
-                            return _buildNotificationItem(
-                              notifications[index],
-                              isDesktop,
+                      : Builder(
+                          builder: (context) {
+                            final rows = _buildRows();
+                            return ListView.builder(
+                              controller: _scrollController,
+                              itemCount: rows.length + (hasMore ? 1 : 0),
+                              padding: AppResponsive.horizontalPadding(
+                                context,
+                              ).copyWith(top: 6, bottom: 24),
+                              itemBuilder: (context, index) {
+                                if (index == rows.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(child: AppLoader()),
+                                  );
+                                }
+                                final row = rows[index];
+                                if (row is String) return _dateHeader(row);
+                                return _buildNotificationItem(
+                                  row as NotificationModel,
+                                  isDesktop,
+                                );
+                              },
                             );
                           },
                         ),
@@ -203,116 +317,120 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Widget _buildNotificationItem(NotificationModel item, bool isDesktop) {
     final bool isUnread = !item.isRead;
-    final double radius = isDesktop ? 16 : 12;
-
-    final Color cardBg = isDesktop
-        ? (isUnread ? const Color(0xFFEDF5F3) : ThemeConfig.backgroundLight)
-        : (isUnread ? const Color(0xFFF0F7F5) : Colors.white);
-
-    final Color avatarBg = isUnread
-        ? ThemeConfig.primaryColor
-        : (isDesktop ? ThemeConfig.borderLight : const Color(0xFFF1F5F9));
-    final Color avatarTextColor =
-        isUnread ? Colors.white : ThemeConfig.primaryColor;
+    const double radius = 16;
+    final (IconData icon, Color accent) = _visualForType(item.notificationType);
+    final double iconBox = isDesktop ? 46 : 42;
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: isDesktop ? 6 : 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Material(
         borderRadius: BorderRadius.circular(radius),
-        elevation: isDesktop ? 2 : 1,
-        shadowColor: Colors.black.withValues(
-          alpha: isDesktop ? 0.08 : 0.05,
-        ),
-        color: cardBg,
+        color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(radius),
           onTap: () async {
             await _handleNotificationTap(context, item);
             if (mounted) _refresh();
           },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    width: 4,
-                    color: isUnread
-                        ? ThemeConfig.primaryColor
-                        : Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: isUnread ? const Color(0xFFFDFBF3) : Colors.white,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: isUnread
+                    ? ThemeConfig.goldenYellow.withValues(alpha: 0.35)
+                    : const Color(0xFFEEF1F5),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 16 : 13,
+              vertical: isDesktop ? 15 : 13,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: iconBox,
+                  height: iconBox,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(13),
                   ),
-                  Expanded(
-                    child: Padding(
-                      padding: isDesktop
-                          ? const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 16,
-                            )
-                          : const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Icon(icon, color: accent, size: isDesktop ? 23 : 21),
+                ),
+                SizedBox(width: isDesktop ? 14 : 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.message,
+                        style: TextStyle(
+                          fontWeight:
+                              isUnread ? FontWeight.w600 : FontWeight.w500,
+                          fontSize: isDesktop ? 15 : 14,
+                          height: 1.4,
+                          color: isUnread
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF334155),
+                        ),
+                      ),
+                      SizedBox(height: isDesktop ? 7 : 6),
+                      Row(
                         children: [
-                          CircleAvatar(
-                            radius: isDesktop ? 26 : 21,
-                            backgroundColor: avatarBg,
+                          Flexible(
                             child: Text(
-                              item.senderName[0].toUpperCase(),
-                              style: TextStyle(
-                                color: avatarTextColor,
-                                fontWeight: FontWeight.bold,
-                                fontSize: isDesktop ? 16 : 14,
+                              item.senderName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
                               ),
                             ),
                           ),
-                          SizedBox(width: isDesktop ? 16 : 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.message,
-                                  style: TextStyle(
-                                    fontWeight: isUnread
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                    fontSize: isDesktop ? 15.5 : 14.5,
-                                    color: isUnread
-                                        ? ThemeConfig.textPrimaryLight
-                                        : ThemeConfig.textSecondaryLight,
-                                  ),
-                                ),
-                                SizedBox(height: isDesktop ? 5 : 4),
-                                Text(
-                                  '${item.senderName} • ${_formatDate(item.createdAt)}',
-                                  style: TextStyle(
-                                    fontSize: isDesktop ? 13 : 12,
-                                    color: ThemeConfig.textSecondaryLight
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ],
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              '•',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                           ),
-                          SizedBox(width: isDesktop ? 12 : 8),
-                          Icon(
-                            isUnread
-                                ? Icons.notifications_active_rounded
-                                : Icons.notifications_none_rounded,
-                            color: isUnread
-                                ? ThemeConfig.primaryColor
-                                : Colors.grey.shade400,
-                            size: isDesktop ? 22 : 20,
+                          Text(
+                            _relativeTime(item.createdAt),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF94A3B8),
+                            ),
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                if (isUnread)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8, top: 4),
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: ThemeConfig.goldenYellow,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
