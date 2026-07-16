@@ -26,6 +26,10 @@ class UniversalWebView extends StatefulWidget {
 
 class _UniversalWebViewState extends State<UniversalWebView>
     with SingleTickerProviderStateMixin {
+  // Keeps loaded controllers alive across navigations so revisiting a link
+  // reuses the already-rendered page instead of reloading from scratch.
+  static final Map<String, _CachedWebView> _webViewCache = {};
+
   late final WebViewController _controller;
 
   bool _isLoading = true;
@@ -58,53 +62,67 @@ class _UniversalWebViewState extends State<UniversalWebView>
     });
 
     if (!kIsWeb) {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted);
+      final cached = _webViewCache[widget.url];
 
-      // ❗ FIX: macOS crash (DO NOT call setBackgroundColor on macOS)
-      if (!Platform.isMacOS) {
-        _controller.setBackgroundColor(const Color(0xFFFFFFFF));
+      if (cached != null) {
+        // Reuse the previously loaded controller — no reload, no loader.
+        _controller = cached.controller;
+        _isLoading = !cached.loaded;
+        _attachDelegate();
+      } else {
+        _controller = WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted);
+
+        // ❗ FIX: macOS crash (DO NOT call setBackgroundColor on macOS)
+        if (!Platform.isMacOS) {
+          _controller.setBackgroundColor(const Color(0xFFFFFFFF));
+        }
+
+        _attachDelegate();
+        _controller.loadRequest(Uri.parse(widget.url));
+        _webViewCache[widget.url] = _CachedWebView(_controller);
       }
-
-      _controller
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onProgress: (int progress) {
-              _updateProgress(progress);
-            },
-            onPageStarted: (_) {
-              _updateProgress(0);
-              if (mounted) {
-                setState(() {
-                  _isLoading = true;
-                  _hasError = false;
-                });
-              }
-            },
-            onPageFinished: (_) {
-              _updateProgress(100);
-              Future.delayed(const Duration(milliseconds: 400), () {
-                if (mounted) setState(() => _isLoading = false);
-              });
-            },
-            onWebResourceError: (error) {
-              // Only surface errors for the main document, not sub-resources.
-              if ((error.isForMainFrame ?? true) && mounted) {
-                setState(() {
-                  _hasError = true;
-                  _isLoading = false;
-                });
-              }
-            },
-          ),
-        )
-        // The platform WebView keeps an HTTP cache by default, so revisiting a
-        // link loads from cache first and only revalidates over the network.
-        ..loadRequest(Uri.parse(widget.url));
     }
   }
 
+  void _attachDelegate() {
+    _controller.setNavigationDelegate(
+      NavigationDelegate(
+        onProgress: (int progress) {
+          _updateProgress(progress);
+        },
+        onPageStarted: (_) {
+          _updateProgress(0);
+          if (mounted) {
+            setState(() {
+              _isLoading = true;
+              _hasError = false;
+            });
+          }
+        },
+        onPageFinished: (_) {
+          _updateProgress(100);
+          _webViewCache[widget.url]?.loaded = true;
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted) setState(() => _isLoading = false);
+          });
+        },
+        onWebResourceError: (error) {
+          // Only surface errors for the main document, not sub-resources.
+          if ((error.isForMainFrame ?? true) && mounted) {
+            _webViewCache[widget.url]?.loaded = false;
+            setState(() {
+              _hasError = true;
+              _isLoading = false;
+            });
+          }
+        },
+      ),
+    );
+  }
+
   Future<void> _reload() async {
+    _webViewCache[widget.url]?.loaded = false;
     if (mounted) {
       setState(() {
         _hasError = false;
@@ -373,6 +391,13 @@ class _UniversalWebViewState extends State<UniversalWebView>
       ),
     );
   }
+}
+
+class _CachedWebView {
+  final WebViewController controller;
+  bool loaded = false;
+
+  _CachedWebView(this.controller);
 }
 
 class _WebFallbackView extends StatefulWidget {

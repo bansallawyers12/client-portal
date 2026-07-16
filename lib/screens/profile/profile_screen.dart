@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:client/services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_loader.dart';
+import '../../utils/cache_helper.dart';
 import '../../utils/responsive_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const String _profileCacheKey = 'client_profile_cache';
+
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _profileData;
@@ -20,32 +23,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchProfile();
+    _initProfile();
   }
 
-  // ─── Logic (unchanged) ───────────────────────────────────────────────────────
+  // ─── Logic ───────────────────────────────────────────────────────────────────
 
-  Future<void> _fetchProfile() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  Future<void> _initProfile() async {
+    // Show cached profile instantly (no loader), then refresh in background.
+    final cached = await CacheHelper.loadEnvelope(
+      _profileCacheKey,
+      maxAge: const Duration(days: 30),
+    );
+    if (cached is Map && mounted) {
+      setState(() {
+        _profileData = Map<String, dynamic>.from(cached);
+        _isLoading = false;
+      });
+    }
+    await _fetchProfile(silent: _profileData != null);
+  }
+
+  Future<void> _fetchProfile({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
     try {
       final result = await ApiService.getClientProfile();
+      if (!mounted) return;
       if (result['success'] == true) {
         setState(() {
           _profileData = result['data'];
           _isLoading = false;
+          _errorMessage = null;
         });
+        await CacheHelper.saveEnvelope(
+          key: _profileCacheKey,
+          data: result['data'],
+        );
       } else {
+        // Keep showing cached data if we already have it.
         setState(() {
-          _errorMessage = result['message'] ?? 'Failed to load profile';
+          if (_profileData == null) {
+            _errorMessage = result['message'] ?? 'Failed to load profile';
+          }
           _isLoading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        if (_profileData == null) _errorMessage = e.toString();
         _isLoading = false;
       });
     }
