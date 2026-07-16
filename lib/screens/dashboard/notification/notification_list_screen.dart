@@ -7,6 +7,7 @@ import '../../../models/notification/notification.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
+import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../workflow/message/workflow_messages_screen.dart';
 import '../../workflow/workflow_stages_screen.dart';
@@ -30,11 +31,14 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   List<NotificationModel> notifications = [];
   final ScrollController _scrollController = ScrollController();
 
+  String get _cacheKey =>
+      'notifications_${AuthService.selectedMatterId ?? 0}_v1';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    fetchNotifications();
+    _init();
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >=
               _scrollController.position.maxScrollExtent - 200 &&
@@ -43,6 +47,66 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         fetchNotifications();
       }
     });
+  }
+
+  // Shows the cached first page instantly, then refreshes from the network
+  // in the background (stale-while-revalidate) so no loader is shown on revisit.
+  Future<void> _init() async {
+    final cached = await CacheHelper.loadEnvelope(
+      _cacheKey,
+      maxAge: const Duration(days: 3),
+    );
+    if (cached is List && cached.isNotEmpty && mounted) {
+      setState(() {
+        notifications = cached
+            .map<NotificationModel>(
+              (e) => NotificationModel.fromJson(Map<String, dynamic>.from(e)),
+            )
+            .toList();
+        currentPage = 2;
+        isLoading = false;
+      });
+    }
+    await _loadFirstPage(silent: notifications.isNotEmpty);
+  }
+
+  // Fetches page 1, replaces the list and updates the cache.
+  Future<void> _loadFirstPage({bool silent = false}) async {
+    if (!mounted) return;
+    if (!silent) setState(() => isLoading = true);
+
+    try {
+      final data = await ApiService.getNotifications(
+        clientMatterId: AuthService.selectedMatterId ?? 0,
+        page: 1,
+        limit: limit,
+      );
+
+      final list = (data['data']['notifications'] as List)
+          .map((json) => NotificationModel.fromJson(json))
+          .toList();
+
+      if (!mounted) return;
+      setState(() {
+        notifications = list;
+        currentPage = 2;
+        hasMore = currentPage <= data['data']['pagination']['last_page'];
+        isLoading = false;
+      });
+
+      await CacheHelper.saveEnvelope(
+        key: _cacheKey,
+        data: list.map((n) => n.toJson()).toList(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+      if (notifications.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
   }
 
   @override
@@ -94,14 +158,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Future<void> _refresh() async {
     if (!mounted) return;
-
-    setState(() {
-      currentPage = 1;
-      notifications.clear();
-      hasMore = true;
-    });
-
-    await fetchNotifications();
+    await _loadFirstPage(silent: true);
   }
 
   // Flattens notifications into a list of section-header strings and items.
