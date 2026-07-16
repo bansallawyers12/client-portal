@@ -6,6 +6,7 @@ import '../../../models/blog.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
+import '../../../widgets/blog/blog_image.dart';
 
 class BlogListScreen extends StatefulWidget {
   const BlogListScreen({super.key});
@@ -157,25 +158,7 @@ class _BlogListScreenState extends State<BlogListScreen> {
           fit: StackFit.expand,
           children: [
             // Background image
-            Image.network(
-              blog.image,
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, st) => Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF1E1464), Color(0xFF3949AB)],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(Icons.article_outlined, size: 56, color: Colors.white24),
-                ),
-              ),
-              loadingBuilder: (ctx, child, progress) => progress == null
-                  ? child
-                  : Container(color: const Color(0xFFE8EAF0)),
-            ),
+            BlogImage(url: blog.image),
 
             // Gradient overlay — bottom heavy for text legibility
             DecoratedBox(
@@ -329,17 +312,7 @@ class _BlogListScreenState extends State<BlogListScreen> {
             SizedBox(
               width: 106,
               height: 106,
-              child: Image.network(
-                blog.image,
-                fit: BoxFit.cover,
-                errorBuilder: (ctx, err, st) => Container(
-                  color: const Color(0xFFF1F5F9),
-                  child: Icon(Icons.article_outlined, size: 28, color: Colors.grey.shade300),
-                ),
-                loadingBuilder: (ctx, child, progress) => progress == null
-                    ? child
-                    : Container(color: const Color(0xFFF1F5F9)),
-              ),
+              child: BlogImage(url: blog.image),
             ),
 
             // Content

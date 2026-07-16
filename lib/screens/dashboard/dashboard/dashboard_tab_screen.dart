@@ -18,6 +18,7 @@ import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
+import '../../../widgets/blog/blog_image.dart';
 import '../../../widgets/common/error_widget.dart';
 import '../../../widgets/common/pressable_scale.dart';
 import '../../../widgets/dashboard/quick_actions_card.dart';
@@ -644,6 +645,8 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
     );
   }
 
+  Widget _buildBlogImage(Blog blog) => BlogImage(url: blog.image);
+
   Widget _buildBlogCard(Blog blog) {
     const double stripHeight = 64.0;
 
@@ -687,33 +690,9 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Background image
-              blog.image.isNotEmpty
-                  ? Image.network(
-                      blog.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF1E1464), Color(0xFF2D3B8F)],
-                          ),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.article_outlined, size: 32, color: Colors.white24),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF1E1464), Color(0xFF2D3B8F)],
-                        ),
-                      ),
-                    ),
+              // Background image (falls back to a branded asset when the blog
+              // has no real cover, uses the server placeholder, or fails to load)
+              _buildBlogImage(blog),
 
               // Top vignette so badge stays readable over any image
               Positioned(

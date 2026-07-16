@@ -7,6 +7,7 @@ import '../../../config/theme_config.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/cache_helper.dart';
 import '../../../utils/responsive_utils.dart';
+import '../../../widgets/blog/blog_image.dart';
 
 class BlogDetailScreen extends StatefulWidget {
   final int blogId;
@@ -363,23 +364,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            blog!['image'] ?? '',
-            fit: BoxFit.cover,
-            errorBuilder: (ctx, err, st) => Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1E1464), Color(0xFF3949AB)],
-                ),
-              ),
-              child: const Center(
-                child: Icon(Icons.article_outlined,
-                    size: 64, color: Colors.white24),
-              ),
-            ),
-          ),
+          BlogImage(url: (blog!['image'] ?? '').toString()),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
