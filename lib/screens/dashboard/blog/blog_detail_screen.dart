@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:client/utils/app_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_html/flutter_html.dart';
 import '../../../config/theme_config.dart';
 import '../../../services/api_service_bansal_immigration.dart';
 import '../../../utils/cache_helper.dart';
-import '../../../utils/responsive_utils.dart';
 import '../../../widgets/blog/blog_image.dart';
 
 class BlogDetailScreen extends StatefulWidget {
@@ -110,8 +110,6 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
     if (isLoading) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -185,6 +183,51 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                   child: Html(
                     data: blog!['description'] ?? '',
+                    extensions: [
+                      // Cache in-article images to disk so they load once and
+                      // then appear instantly on every later visit.
+                      TagExtension(
+                        tagsToExtend: {'img'},
+                        builder: (ctx) {
+                          final src = ctx.attributes['src'] ?? '';
+                          if (src.trim().isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: CachedNetworkImage(
+                                imageUrl: src,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                fadeInDuration:
+                                    const Duration(milliseconds: 200),
+                                placeholder: (c, _) => Container(
+                                  height: 180,
+                                  color: const Color(0xFFF1F5F9),
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          ThemeConfig.goldenYellow,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (c, _, _) =>
+                                    const SizedBox.shrink(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                     style: {
                       'body': Style(
                         margin: Margins.zero,
@@ -310,7 +353,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
             right: 0,
             child: ValueListenableBuilder<double>(
               valueListenable: _readProgress,
-              builder: (_, value, __) => SizedBox(
+              builder: (_, value, _) => SizedBox(
                 height: 3,
                 child: LinearProgressIndicator(
                   value: value,
@@ -442,66 +485,99 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
   }
 
   Widget _buildMeta() {
+    final author = blog!['author']?.toString().isNotEmpty == true
+        ? blog!['author'].toString()
+        : 'Bansal Immigration';
+    final date = blog!['date']?.toString() ?? '';
+    final readingTime = blog!['reading_time'];
+
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1464).withValues(alpha: 0.08),
+            width: 42,
+            height: 42,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1E1464), Color(0xFF2D3B8F)],
+              ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_rounded,
-                size: 18, color: Color(0xFF1E1464)),
+            alignment: Alignment.center,
+            child: Text(
+              _initials(author),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  blog!['author']?.toString().isNotEmpty == true
-                      ? blog!['author']
-                      : 'Bansal Immigration',
+                  author,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1E293B),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded,
-                        size: 10, color: Color(0xFF94A3B8)),
-                    const SizedBox(width: 4),
-                    Text(
-                      blog!['date']?.toString() ?? '',
-                      style: const TextStyle(
-                          fontSize: 11.5, color: Color(0xFF94A3B8)),
-                    ),
-                    if (blog!['reading_time'] != null) ...[
-                      const Text('  ·  ',
-                          style: TextStyle(
-                              fontSize: 11.5, color: Color(0xFF94A3B8))),
-                      const Icon(Icons.timer_outlined,
-                          size: 10, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${blog!['reading_time']} min read',
-                        style: const TextStyle(
-                            fontSize: 11.5, color: Color(0xFF94A3B8)),
-                      ),
-                    ],
+                    if (date.isNotEmpty)
+                      _metaChip(Icons.calendar_today_rounded, date),
+                    if (date.isNotEmpty && readingTime != null)
+                      const SizedBox(width: 8),
+                    if (readingTime != null)
+                      _metaChip(Icons.timer_outlined, '$readingTime min read'),
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _initials(String name) {
+    final parts =
+        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return 'B';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  Widget _metaChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: const Color(0xFF64748B)),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF475569),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],

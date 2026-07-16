@@ -1,8 +1,13 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Shows a blog cover image, falling back to a branded local asset when the
 /// blog has no real image, uses the CRM's generic "default_blog" placeholder,
 /// or the network image fails to load.
+///
+/// Images are cached to disk via [CachedNetworkImage], so a blog cover is
+/// downloaded once and then served instantly (no re-loading spinner) on every
+/// later visit.
 class BlogImage extends StatelessWidget {
   final String url;
   final double? iconSize;
@@ -31,12 +36,14 @@ class BlogImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!_hasRealImage) return _fallback;
-    return Image.network(
-      url,
+    return CachedNetworkImage(
+      imageUrl: url,
       fit: BoxFit.cover,
-      loadingBuilder: (ctx, child, progress) =>
-          progress == null ? child : _placeholder(),
-      errorBuilder: (ctx, err, stack) => _fallback,
+      width: double.infinity,
+      height: double.infinity,
+      fadeInDuration: const Duration(milliseconds: 200),
+      placeholder: (ctx, _) => _placeholder(),
+      errorWidget: (ctx, _, _) => _fallback,
     );
   }
 }
