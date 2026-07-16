@@ -202,6 +202,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(24),
+          ),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         titleSpacing: 0,
         title: Column(
