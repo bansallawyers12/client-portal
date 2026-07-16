@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -143,15 +145,20 @@ class _BulkUploadDocumentScreenState extends State<BulkUploadDocumentScreen>
     }
   }
 
-  Future<void> _pickFromCamera() async {
-    final image = await _imagePicker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      final bytes = await image.readAsBytes();
+  Future<void> _scanDocuments() async {
+    try {
+      final paths = await CunningDocumentScanner.getPictures(asPdf: true);
+      if (paths == null || paths.isEmpty) return;
+
+      final bytes = await File(paths.first).readAsBytes();
+      final fileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
       setState(() {
         _selectedFiles.add(
-          SelectedUploadFile(bytes: bytes, fileName: image.name),
+          SelectedUploadFile(bytes: bytes, fileName: fileName),
         );
       });
+    } catch (e) {
+      _showSnack("Scan failed: $e", isError: true);
     }
   }
 
@@ -213,13 +220,13 @@ class _BulkUploadDocumentScreenState extends State<BulkUploadDocumentScreen>
                 if (!kIsWeb) ...[
                   const SizedBox(height: 10),
                   _buildBottomSheetOption(
-                    icon: Icons.camera_alt_rounded,
-                    label: "Camera",
-                    subtitle: "Take a new photo",
+                    icon: Icons.document_scanner_rounded,
+                    label: "Scan Documents",
+                    subtitle: "Auto-crop & capture pages as PDF",
                     color: const Color(0xFF10B981),
                     onTap: () async {
                       Navigator.pop(context);
-                      await _pickFromCamera();
+                      await _scanDocuments();
                     },
                   ),
                 ],

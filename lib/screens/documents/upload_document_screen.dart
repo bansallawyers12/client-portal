@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:client/config/theme_config.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -112,14 +114,17 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 ),
                 if (!kIsWeb)
                   ListTile(
-                    leading: const Icon(Icons.camera_alt, color: Colors.black),
+                    leading: const Icon(
+                      Icons.document_scanner,
+                      color: Colors.black,
+                    ),
                     title: const Text(
-                      'Camera',
+                      'Scan Documents',
                       style: TextStyle(color: Colors.black),
                     ),
                     onTap: () async {
                       Navigator.of(context).pop();
-                      await _pickFromCamera();
+                      await _scanDocuments();
                     },
                   ),
               ],
@@ -170,20 +175,18 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
     }
   }
 
-  Future<void> _pickFromCamera() async {
+  Future<void> _scanDocuments() async {
     try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-      );
-      if (image != null) {
-        final bytes = await image.readAsBytes();
-        setState(() {
-          _selectedFileBytes = bytes;
-          _selectedFileName = image.name;
-        });
-      }
+      final paths = await CunningDocumentScanner.getPictures(asPdf: true);
+      if (paths == null || paths.isEmpty) return;
+
+      final bytes = await File(paths.first).readAsBytes();
+      setState(() {
+        _selectedFileBytes = bytes;
+        _selectedFileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      });
     } catch (e) {
-      _showErrorSnackBar('Error taking photo: $e');
+      _showErrorSnackBar('Error scanning document: $e');
     }
   }
 

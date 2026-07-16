@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:client/config/theme_config.dart';
 import 'package:client/widgets/common_app_bar.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -170,13 +173,13 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
                   const SizedBox(height: 10),
 
                   _buildBottomSheetOption(
-                    icon: Icons.camera_alt_rounded,
-                    label: "Camera",
-                    subtitle: "Take a new photo",
+                    icon: Icons.document_scanner_rounded,
+                    label: "Scan Documents",
+                    subtitle: "Auto-crop & capture pages as PDF",
                     color: const Color(0xFF10B981),
                     onTap: () async {
                       Navigator.pop(context);
-                      await _pickFromCamera(stage, checklistId);
+                      await _scanDocuments(stage, checklistId);
                     },
                   ),
                 ],
@@ -271,14 +274,23 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
     }
   }
 
-  Future<void> _pickFromCamera(WorkflowStage stage, int checklistId) async {
-    final image = await _imagePicker.pickImage(source: ImageSource.camera);
+  Future<void> _scanDocuments(WorkflowStage stage, int checklistId) async {
+    try {
+      final paths = await CunningDocumentScanner.getPictures(asPdf: true);
+      if (paths == null || paths.isEmpty) return;
 
-    if (image != null) {
-      _selectedFileBytes = await image.readAsBytes();
-      _selectedFileName = image.name;
+      _selectedFileBytes = await File(paths.first).readAsBytes();
+      _selectedFileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       await _uploadDocument(stage, checklistId);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Scan failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

@@ -141,10 +141,12 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
     try {
       final response = await ApiServiceBansalImmigration.postcodeResult(postcode);
       if (response['success']) {
+        final fetched = PostcodeResult.fromJson(response['data']);
         setState(() {
-          result = PostcodeResult.fromJson(response['data']);
+          result = fetched;
           loading = false;
         });
+        if (mounted) _showResultDialog(fetched);
       } else {
         setState(() => loading = false);
       }
@@ -163,7 +165,8 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
         matterID: AuthService.selectedMatterId,
       ),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               maxWidth: AppResponsive.maxContentWidth,
@@ -190,7 +193,6 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
                         padding: EdgeInsets.symmetric(vertical: 32),
                         child: Center(child: AppLoader()),
                       ),
-                    if (result != null) _buildResultCard(),
                     const SizedBox(height: 32),
                   ],
                 ),
@@ -396,117 +398,235 @@ class _PostcodeCheckerScreenState extends State<PostcodeCheckerScreen> {
     );
   }
 
-  Widget _buildResultCard() {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _border),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: _gold,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+  void _showResultDialog(PostcodeResult data) {
+    final isRegional = data.regionalStatus.toLowerCase().contains('yes');
+    final statusColor = isRegional ? _accent : const Color(0xFFDC2626);
+    final statusBg = isRegional ? _accentLight : const Color(0xFFFEF2F2);
+
+    showDialog(
+      context: context,
+      builder:
+          (_) => Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 24,
+            ),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 30, 24, 26),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [_primary, Color(0xFF3B2E9E)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.location_on_rounded,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              data.postcode,
+                              style: const TextStyle(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${data.area}, ${data.state}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _dialogCloseButton(),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusBg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isRegional
+                                    ? Icons.check_circle_rounded
+                                    : Icons.cancel_rounded,
+                                color: statusColor,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Regional Status',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: _textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      data.regionalStatus,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F8FC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _border),
+                          ),
+                          child: Column(
+                            children: [
+                              _dialogDetailRow('Postcode', data.postcode),
+                              _dialogDivider(),
+                              _dialogDetailRow('Area', data.area),
+                              _dialogDivider(),
+                              _dialogDetailRow('State', data.state),
+                              _dialogDivider(),
+                              _dialogDetailRow('Category', data.category),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              'Done',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              const Text(
-                'Result',
-                style: TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: _primary,
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 4),
-          _resultRow('Postcode', result!.postcode),
-          _resultRow('Area', result!.area),
-          _resultRow('State', result!.state),
-          _resultRow(
-            'Regional Status',
-            result!.regionalStatus,
-            highlight: true,
-          ),
-          _resultRow('Category', result!.category, last: true),
-        ],
+    );
+  }
+
+  Widget _dialogCloseButton() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.2),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => Navigator.pop(context),
+        child: const Padding(
+          padding: EdgeInsets.all(6),
+          child: Icon(Icons.close_rounded, color: Colors.white, size: 20),
+        ),
       ),
     );
   }
 
-  Widget _resultRow(
-    String label,
-    String value, {
-    bool highlight = false,
-    bool last = false,
-  }) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 130,
-                child: Text(
-                  label,
-                  style: const TextStyle(fontSize: 13, color: _textSecondary),
-                ),
-              ),
-              Expanded(
-                child:
-                    highlight
-                        ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _accentLight,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            value,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _accent,
-                            ),
-                          ),
-                        )
-                        : Text(
-                          value,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                            color: _textPrimary,
-                          ),
-                        ),
-              ),
-            ],
+  Widget _dialogDivider() =>
+      Divider(height: 1, thickness: 1, color: _border.withValues(alpha: 0.6));
+
+  Widget _dialogDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: _textSecondary),
+            ),
           ),
-        ),
-        if (!last) const Divider(height: 1, color: _border),
-      ],
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: _textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

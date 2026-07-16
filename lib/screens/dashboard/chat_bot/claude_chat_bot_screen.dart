@@ -19,6 +19,7 @@ class ClaudeChatBotScreen extends StatefulWidget {
 class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _composerFocusNode = FocusNode();
   final SpeechToText _speech = SpeechToText();
 
   final List<_Message> _messages = [];
@@ -48,6 +49,7 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _composerFocusNode.dispose();
     _speech.stop();
     super.dispose();
   }
@@ -217,6 +219,7 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
                   Expanded(
                     child: TextField(
                       controller: _textController,
+                      focusNode: _composerFocusNode,
                       onChanged: (_) => setState(() {}),
                       onSubmitted: _isLoading ? null : _sendMessage,
                       maxLines: 4,
@@ -382,9 +385,64 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
               ),
             );
           }),
+          GestureDetector(
+            onTap: _isLoading ? null : _openCustomQuery,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: ThemeConfig.goldenYellow.withValues(alpha: 0.5),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Text('✏️', style: TextStyle(fontSize: 15)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Other — type your own question',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: ThemeConfig.goldenYellow,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _openCustomQuery() {
+    setState(() => _showQuickReplies = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _composerFocusNode.requestFocus();
+    });
   }
 
   @override

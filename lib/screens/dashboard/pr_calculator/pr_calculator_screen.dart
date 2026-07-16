@@ -10,6 +10,7 @@ import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common_app_bar.dart';
+import '../book_appointment/book_location_screen.dart';
 
 class PRCalculatorScreen extends StatefulWidget {
   const PRCalculatorScreen({super.key});
@@ -32,7 +33,7 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
 
   Map<AdditionalPointItem, bool> additionalPoints = {};
 
-  static const int _eligibilityThreshold = 60;
+  static const int _eligibilityThreshold = 65;
   bool _congratsShown = false;
 
   int get _liveTotal {
@@ -153,27 +154,46 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
               ? const Center(child: AppLoader())
               : SafeArea(
                 top: false,
-                child: SingleChildScrollView(
-                  padding: AppResponsive.pagePadding(context),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppResponsive.maxContentWidth,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          _formCard(),
-                          const SizedBox(height: 20),
-                          _visaOptionsCard(data!.visaOptions),
-                          const SizedBox(height: 20),
-                          _importantNotes(data!.importantNotes),
-                          const SizedBox(height: 8),
-                        ],
+                child: Column(
+                  children: [
+                    // Pinned score bar — always visible while scrolling.
+                    Container(
+                      color: const Color(0xFFF5F7FA),
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: AppResponsive.maxContentWidth,
+                          ),
+                          child: _livePointsBar(),
+                        ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: AppResponsive.pagePadding(context),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: AppResponsive.maxContentWidth,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                _formCard(),
+                                const SizedBox(height: 20),
+                                _visaOptionsCard(data!.visaOptions),
+                                const SizedBox(height: 20),
+                                _importantNotes(data!.importantNotes),
+                                const SizedBox(height: 8),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
     );
@@ -239,8 +259,6 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
           ),
           const SizedBox(height: 18),
           _infoBox(),
-          const SizedBox(height: 16),
-          _livePointsBar(),
           const SizedBox(height: 22),
 
           // Fields are revealed one at a time as each is answered.
@@ -341,27 +359,49 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
   }
 
   Widget _ctaButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: 54,
-      child: ElevatedButton.icon(
-        onPressed: _calculatePoints,
-        icon: const Icon(Icons.auto_awesome_rounded, size: 20),
-        label: const Text(
-          "Calculate My Points",
-          style: TextStyle(
-            fontSize: 15.5,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_navy, Color(0xFF3B2E9E)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _navy,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shadowColor: _navy.withValues(alpha: 0.4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: _navy.withValues(alpha: 0.32),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _calculatePoints,
+          child: const Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Calculate My Points",
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -406,57 +446,117 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     final reached = total >= _eligibilityThreshold;
     final progress = (total / _eligibilityThreshold).clamp(0.0, 1.0);
     const green = Color(0xFF27AE60);
-    final accent = reached ? green : _gold;
+    final remaining = (_eligibilityThreshold - total).clamp(
+      0,
+      _eligibilityThreshold,
+    );
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accent.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          colors:
+              reached
+                  ? const [Color(0xFF1E7E45), Color(0xFF27AE60)]
+                  : const [_navy, Color(0xFF3B2E9E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: (reached ? green : _navy).withValues(alpha: 0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(
-                reached
-                    ? Icons.emoji_events_rounded
-                    : Icons.trending_up_rounded,
-                size: 18,
-                color: reached ? green : const Color(0xFF9A6A00),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  reached
-                      ? "You've reached the minimum points!"
-                      : "Your current points",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: reached ? const Color(0xFF1E7E45) : _navy,
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 5,
+                    strokeCap: StrokeCap.round,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      reached ? Colors.white : _gold,
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                "$total / $_eligibilityThreshold",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: reached ? const Color(0xFF1E7E45) : _navy,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "$total",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      "of $_eligibilityThreshold",
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              backgroundColor: Colors.white,
-              valueColor: AlwaysStoppedAnimation<Color>(accent),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      reached
+                          ? Icons.emoji_events_rounded
+                          : Icons.trending_up_rounded,
+                      size: 17,
+                      color: reached ? Colors.white : _gold,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        reached
+                            ? "You've reached the minimum!"
+                            : "Your current points",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  reached
+                      ? "You're eligible to submit an EOI for skilled migration."
+                      : "$remaining more point${remaining == 1 ? '' : 's'} to reach the minimum of $_eligibilityThreshold.",
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -486,6 +586,21 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     );
   }
 
+  Widget _dialogCloseButton() {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.2),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => Navigator.pop(context),
+        child: const Padding(
+          padding: EdgeInsets.all(6),
+          child: Icon(Icons.close_rounded, color: Colors.white, size: 20),
+        ),
+      ),
+    );
+  }
+
   void _showCongratsDialog(int total) {
     const green = Color(0xFF27AE60);
     showDialog(
@@ -496,7 +611,9 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            Stack(
+              children: [
+                Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 30),
               decoration: const BoxDecoration(
@@ -541,12 +658,19 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                 ],
               ),
             ),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _dialogCloseButton(),
+                ),
+              ],
+            ),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   const Text(
-                    "You now meet the minimum 60 points required to be eligible "
+                    "You now meet the minimum 65 points required to be eligible "
                     "to submit an Expression of Interest (EOI) for skilled migration.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -560,7 +684,15 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BookLocationScreen(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _navy,
                         foregroundColor: Colors.white,
@@ -570,7 +702,7 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                         ),
                       ),
                       child: const Text(
-                        "Continue",
+                        "Book Appointment",
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -992,146 +1124,242 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     final message = data['message'];
     final breakdown = data['points_breakdown'] as Map<String, dynamic>;
 
+    final breakdownList = breakdown.values.toList();
+
     showDialog(
       context: context,
       builder:
           (_) => Dialog(
             insetPadding: const EdgeInsets.symmetric(
-              horizontal: 24,
+              horizontal: 12,
               vertical: 24,
             ),
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 28),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [_navy, Color(0xFF3B2E9E)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          "YOUR POINTS",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
-                            letterSpacing: 1.5,
+                  Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [_navy, Color(0xFF3B2E9E)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "$totalPoints",
-                          style: const TextStyle(
-                            fontSize: 56,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            "Base $basePoints  •  Additional $additionalPoints",
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                        child: Column(
+                          children: [
+                            const Text(
+                              "YOUR POINTS",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white70,
+                                letterSpacing: 1.5,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "$totalPoints",
+                              style: const TextStyle(
+                                fontSize: 58,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "Base $basePoints",
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Additional $additionalPoints",
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _dialogCloseButton(),
+                      ),
+                    ],
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                     child: Column(
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF27AE60).withValues(
                               alpha: 0.1,
                             ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            message,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFF1E7E45),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFF27AE60).withValues(
+                                alpha: 0.25,
+                              ),
                             ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.verified_rounded,
+                                color: Color(0xFF1E7E45),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  message,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1E7E45),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12.5,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 18),
-                        ...breakdown.values.map((e) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    e['label'],
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: _textPrimary,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F8FC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _border),
+                          ),
+                          child: Column(
+                            children: List.generate(breakdownList.length, (i) {
+                              final e = breakdownList[i];
+                              return Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 13,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            e['label'],
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: _textPrimary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 11,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _navy.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "${e['points']} pts",
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: _navy,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _navy.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    "${e['points']} pts",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: _navy,
+                                  if (i != breakdownList.length - 1)
+                                    Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: _border.withValues(alpha: 0.6),
+                                      indent: 14,
+                                      endIndent: 14,
                                     ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 20),
+                                ],
+                              );
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
                         SizedBox(
                           width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.pop(context),
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const BookLocationScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.event_available_rounded,
+                              size: 20,
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _navy,
                               foregroundColor: Colors.white,
@@ -1140,8 +1368,8 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              "Close",
+                            label: const Text(
+                              "Book Appointment",
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
