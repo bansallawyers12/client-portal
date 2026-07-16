@@ -161,19 +161,18 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     await _loadFirstPage(silent: true);
   }
 
-  // Flattens notifications into a list of section-header strings and items.
-  List<Object> _buildRows() {
-    final rows = <Object>[];
-    String? lastLabel;
+  // Groups notifications by day into sections, each rendered as one card.
+  List<({String label, List<NotificationModel> items})> _buildSections() {
+    final sections = <({String label, List<NotificationModel> items})>[];
     for (final n in notifications) {
       final label = _dateGroupLabel(n.createdAt);
-      if (label != lastLabel) {
-        rows.add(label);
-        lastLabel = label;
+      if (sections.isEmpty || sections.last.label != label) {
+        sections.add((label: label, items: [n]));
+      } else {
+        sections.last.items.add(n);
       }
-      rows.add(n);
     }
-    return rows;
+    return sections;
   }
 
   String _dateGroupLabel(DateTime dt) {
@@ -346,25 +345,27 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         )
                       : Builder(
                           builder: (context) {
-                            final rows = _buildRows();
+                            final sections = _buildSections();
                             return ListView.builder(
                               controller: _scrollController,
-                              itemCount: rows.length + (hasMore ? 1 : 0),
+                              itemCount: sections.length + (hasMore ? 1 : 0),
                               padding: AppResponsive.horizontalPadding(
                                 context,
                               ).copyWith(top: 6, bottom: 24),
                               itemBuilder: (context, index) {
-                                if (index == rows.length) {
+                                if (index == sections.length) {
                                   return const Padding(
                                     padding: EdgeInsets.all(16),
                                     child: Center(child: AppLoader()),
                                   );
                                 }
-                                final row = rows[index];
-                                if (row is String) return _dateHeader(row);
-                                return _buildNotificationItem(
-                                  row as NotificationModel,
-                                  isDesktop,
+                                final section = sections[index];
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _dateHeader(section.label),
+                                    _sectionCard(section.items, isDesktop),
+                                  ],
                                 );
                               },
                             );
@@ -377,123 +378,133 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     );
   }
 
-  Widget _buildNotificationItem(NotificationModel item, bool isDesktop) {
-    final bool isUnread = !item.isRead;
-    const double radius = 16;
-    final (IconData icon, Color accent) = _visualForType(item.notificationType);
-    final double iconBox = isDesktop ? 46 : 42;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Material(
-        borderRadius: BorderRadius.circular(radius),
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(radius),
-          onTap: () async {
-            await _handleNotificationTap(context, item);
-            if (mounted) _refresh();
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: isUnread ? const Color(0xFFFDFBF3) : Colors.white,
-              borderRadius: BorderRadius.circular(radius),
-              border: Border.all(
-                color: isUnread
-                    ? ThemeConfig.goldenYellow.withValues(alpha: 0.35)
-                    : const Color(0xFFEEF1F5),
-                width: 1,
+  // One rounded card per day holding all that day's notifications, separated
+  // by hairline dividers — a cleaner alternative to a wall of separate cards.
+  Widget _sectionCard(List<NotificationModel> items, bool isDesktop) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFEEF1F5), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < items.length; i++) ...[
+            if (i > 0)
+              const Padding(
+                padding: EdgeInsets.only(left: 68),
+                child: Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+            _itemRow(items[i], isDesktop),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _itemRow(NotificationModel item, bool isDesktop) {
+    final bool isUnread = !item.isRead;
+    final (IconData icon, Color accent) = _visualForType(item.notificationType);
+    const double iconBox = 42;
+
+    return Material(
+      color: isUnread ? const Color(0xFFFFFBF0) : Colors.white,
+      child: InkWell(
+        onTap: () async {
+          await _handleNotificationTap(context, item);
+          if (mounted) _refresh();
+        },
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: isDesktop ? 15 : 14,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: iconBox,
+                height: iconBox,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 16 : 13,
-              vertical: isDesktop ? 15 : 13,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: iconBox,
-                  height: iconBox,
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(icon, color: accent, size: isDesktop ? 23 : 21),
-                ),
-                SizedBox(width: isDesktop ? 14 : 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.message,
-                        style: TextStyle(
-                          fontWeight:
-                              isUnread ? FontWeight.w600 : FontWeight.w500,
-                          fontSize: isDesktop ? 15 : 14,
-                          height: 1.4,
-                          color: isUnread
-                              ? const Color(0xFF0F172A)
-                              : const Color(0xFF334155),
-                        ),
+                child: Icon(icon, color: accent, size: 21),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.message,
+                      style: TextStyle(
+                        fontWeight:
+                            isUnread ? FontWeight.w600 : FontWeight.w500,
+                        fontSize: isDesktop ? 15 : 14,
+                        height: 1.4,
+                        color: isUnread
+                            ? const Color(0xFF0F172A)
+                            : const Color(0xFF334155),
                       ),
-                      SizedBox(height: isDesktop ? 7 : 6),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              item.senderName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              '•',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFFCBD5E1),
-                              ),
-                            ),
-                          ),
-                          Text(
-                            _relativeTime(item.createdAt),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            item.senderName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF94A3B8),
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            '•',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFCBD5E1),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _relativeTime(item.createdAt),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (isUnread)
+                Container(
+                  margin: const EdgeInsets.only(left: 8, top: 5),
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: ThemeConfig.goldenYellow,
+                    shape: BoxShape.circle,
                   ),
                 ),
-                if (isUnread)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8, top: 4),
-                    width: 9,
-                    height: 9,
-                    decoration: const BoxDecoration(
-                      color: ThemeConfig.goldenYellow,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
