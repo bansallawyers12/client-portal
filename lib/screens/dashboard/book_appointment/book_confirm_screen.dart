@@ -153,6 +153,16 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
       return;
     }
 
+    if (enquiryController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in the Details of Enquiry to proceed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (selectedDay == null || selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select date and time')),

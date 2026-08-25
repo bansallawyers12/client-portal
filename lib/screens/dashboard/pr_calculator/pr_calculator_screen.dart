@@ -1062,17 +1062,130 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
         if (v) total += k.value;
       });
 
+      final bool isEligible = total >= 65;
+
       showDialog(
         context: context,
         builder:
             (_) => AlertDialog(
-              title: const Text("Total Points"),
-              content: Text("You have $total points."),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color:
+                          isEligible
+                              ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                              : Colors.orange.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isEligible
+                          ? Icons.emoji_events_rounded
+                          : Icons.info_outline_rounded,
+                      color:
+                          isEligible
+                              ? const Color(0xFF16A34A)
+                              : Colors.orange,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  Text(
+                    isEligible
+                        ? 'Congratulations! 🎉'
+                        : 'Your Points Summary',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          isEligible
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFF1F2937),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Points badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ThemeConfig.goldenYellow.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'You have $total points',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: ThemeConfig.goldenYellow.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Message
+                  Text(
+                    isEligible
+                        ? 'You are eligible for EOI submissions for skilled migration. Book a consultation to get started!'
+                        : 'You need ${65 - total} more points to be eligible for EOI submissions.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
+                if (isEligible) ...[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(color: Color(0xFF6B7280)),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BookLocationScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F3C88),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Book Consultation'),
+                  ),
+                ] else ...[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('OK'),
+                  ),
+                ],
               ],
             ),
       );

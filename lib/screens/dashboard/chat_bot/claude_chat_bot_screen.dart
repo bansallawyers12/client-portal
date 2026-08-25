@@ -8,6 +8,7 @@ import '../../../config/theme_config.dart';
 import '../../../services/api_service.dart';
 import '../../../utils/app_loader.dart';
 import '../../../utils/responsive_utils.dart';
+import '../book_appointment/book_location_screen.dart';
 
 class ClaudeChatBotScreen extends StatefulWidget {
   const ClaudeChatBotScreen({super.key});
@@ -107,9 +108,31 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
         reply = response['message'] ?? 'Something went wrong.';
       }
 
+      // Detect booking intent — strip website URL and flag for in-app button
+      final bool hasBookingIntent = _containsBookingIntent(reply);
+      if (hasBookingIntent) {
+        // Remove the website booking URL from the reply
+        reply = reply
+            .replaceAll(
+              RegExp(
+                r'https?://www\.bansalimmigration\.com\.au/book[^\s]*',
+                caseSensitive: false,
+              ),
+              '',
+            )
+            .replaceAll(RegExp(r'\s{2,}'), ' ')
+            .trim();
+      }
+
       setState(() {
         _isLoading = false;
-        _messages.add(_Message(text: reply, isUser: false));
+        _messages.add(
+          _Message(
+            text: reply,
+            isUser: false,
+            showBookingButton: hasBookingIntent,
+          ),
+        );
       });
 
       _scrollToBottom();
@@ -125,6 +148,18 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
       });
       _scrollToBottom();
     }
+  }
+
+  bool _containsBookingIntent(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('bansalimmigration.com.au/book') ||
+        lower.contains('book directly') ||
+        lower.contains('book a consultation') ||
+        lower.contains('book an appointment') ||
+        lower.contains('book a free consultation') ||
+        lower.contains('schedule a consultation') ||
+        lower.contains('schedule an appointment') ||
+        lower.contains('book online');
   }
 
   Future<void> _toggleListening() async {
@@ -481,7 +516,50 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
                       if (_isLoading && index == _messages.length) {
                         return _buildTypingIndicator();
                       }
-                      return _messages[index];
+                      final msg = _messages[index];
+                      if (!msg.isUser && msg.showBookingButton) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            msg,
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 42,
+                                bottom: 10,
+                              ),
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => const BookLocationScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.calendar_month_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Book Consultation'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF1F3C88),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      return msg;
                     },
                   ),
                 ),
@@ -501,8 +579,13 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
 class _Message extends StatelessWidget {
   final String text;
   final bool isUser;
+  final bool showBookingButton;
 
-  const _Message({required this.text, required this.isUser});
+  const _Message({
+    required this.text,
+    required this.isUser,
+    this.showBookingButton = false,
+  });
 
   Future<void> _handleTap(String value) async {
     Uri uri;

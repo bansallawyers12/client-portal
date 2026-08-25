@@ -338,7 +338,7 @@ Future<void> _showForegroundNotification(RemoteMessage message) async {
   final String? body = message.notification?.body ?? message.data['body'];
 
   if (title == null || body == null) return;
-
+ 
   await flutterLocalNotificationsPlugin.show(
     message.hashCode,
     title,
@@ -612,7 +612,7 @@ class LoginPageState extends State<LoginPage> {
     if (token != null) {
       await ApiService.registerFCMToken(token);
     }
-  }
+  } 
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
