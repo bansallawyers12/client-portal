@@ -422,7 +422,7 @@ class _DashboardTabScreenState extends State<DashboardTabScreen> {
         backgroundColor: ThemeConfig.goldenYellow,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         elevation: 6,
-        tooltip: 'Claude AI Assistant',
+        tooltip: 'AI Assistant',
         child: const Icon(Icons.chat, size: 28, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,

@@ -117,9 +117,17 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
       String reply;
 
       if (response['success'] == true) {
-        reply =
-            response['data']?['content']?[0]?['text'] ??
-            'No response received.';
+        final data = response['data'];
+        final directReply =
+            data is Map ? data['reply']?.toString().trim() : null;
+        if (directReply != null && directReply.isNotEmpty) {
+          reply = directReply;
+        } else if (data is Map) {
+          reply = data['content']?[0]?['text']?.toString() ??
+              'No response received.';
+        } else {
+          reply = 'No response received.';
+        }
       } else {
         reply = response['message'] ?? 'Something went wrong.';
       }
