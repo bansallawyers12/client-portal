@@ -34,7 +34,6 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
   Map<AdditionalPointItem, bool> additionalPoints = {};
 
   static const int _eligibilityThreshold = 65;
-  bool _congratsShown = false;
 
   int get _liveTotal {
     int total = 0;
@@ -50,23 +49,9 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
     return total;
   }
 
-  /// Applies a selection change, then checks whether the eligibility
-  /// milestone has been reached so the congratulations popup can appear.
+  /// Applies a selection change. (65-point congratulations popup is disabled for now.)
   void _selectAndCheck(VoidCallback apply) {
     setState(apply);
-
-    final total = _liveTotal;
-    if (total >= _eligibilityThreshold) {
-      if (!_congratsShown) {
-        _congratsShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _showCongratsDialog(total);
-        });
-      }
-    } else {
-      // Allow the popup to trigger again if they drop below and cross back.
-      _congratsShown = false;
-    }
   }
 
   @override
@@ -596,124 +581,6 @@ class _PRCalculatorScreenState extends State<PRCalculatorScreen> {
         child: const Padding(
           padding: EdgeInsets.all(6),
           child: Icon(Icons.close_rounded, color: Colors.white, size: 20),
-        ),
-      ),
-    );
-  }
-
-  void _showCongratsDialog(int total) {
-    const green = Color(0xFF27AE60);
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              children: [
-                Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 30),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [green, Color(0xFF2ECC71)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.emoji_events_rounded,
-                      color: Colors.white,
-                      size: 44,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  const Text(
-                    "Congratulations!",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "You've reached $total points",
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: _dialogCloseButton(),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const Text(
-                    "You now meet the minimum 65 points required to be eligible "
-                    "to submit an Expression of Interest (EOI) for skilled migration.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: _textMuted,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const BookLocationScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _navy,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text(
-                        "Book Appointment",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

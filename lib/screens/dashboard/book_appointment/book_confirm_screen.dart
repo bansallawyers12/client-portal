@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/app_loader.dart';
@@ -36,16 +37,71 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
+  String? _fullNameError;
+  String? _emailError;
+  String? _phoneError;
+  String? _enquiryError;
+  String? _dateTimeError;
+
   int slotDuration = 15;
   String startTime = "10:45";
   String endTime = "16:00";
 
   bool get isAdd => selectedOptions['is_add'] ?? true;
 
+  static const String _requiredMsg = 'This is required';
+
   @override
   void initState() {
     super.initState();
+    fullNameController.addListener(() {
+      if (_fullNameError != null && fullNameController.text.trim().isNotEmpty) {
+        setState(() => _fullNameError = null);
+      }
+    });
+    emailController.addListener(() {
+      if (_emailError != null && emailController.text.trim().isNotEmpty) {
+        setState(() => _emailError = null);
+      }
+    });
+    phoneController.addListener(() {
+      if (_phoneError != null && phoneController.text.trim().isNotEmpty) {
+        setState(() => _phoneError = null);
+      }
+    });
+    enquiryController.addListener(() {
+      if (_enquiryError != null && enquiryController.text.trim().isNotEmpty) {
+        setState(() => _enquiryError = null);
+      }
+    });
     _initialize();
+  }
+
+  bool _validateRequiredFields() {
+    final nameEmpty = fullNameController.text.trim().isEmpty;
+    final emailEmpty = emailController.text.trim().isEmpty;
+    final phoneEmpty = phoneController.text.trim().isEmpty;
+    final enquiryEmpty = enquiryController.text.trim().isEmpty;
+    final dateTimeEmpty = selectedDay == null || selectedTime == null;
+
+    setState(() {
+      if (isAdd) {
+        _fullNameError = nameEmpty ? _requiredMsg : null;
+        _emailError = emailEmpty ? _requiredMsg : null;
+        _phoneError = phoneEmpty ? _requiredMsg : null;
+        _enquiryError = enquiryEmpty ? _requiredMsg : null;
+      }
+      _dateTimeError = dateTimeEmpty ? _requiredMsg : null;
+    });
+
+    if (isAdd) {
+      return !nameEmpty &&
+          !emailEmpty &&
+          !phoneEmpty &&
+          !enquiryEmpty &&
+          !dateTimeEmpty;
+    }
+    return !dateTimeEmpty;
   }
 
   Future<void> _initialize() async {
@@ -144,31 +200,7 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
   }
 
   void _goToConfirmation() {
-    if (fullNameController.text.isEmpty ||
-        emailController.text.isEmpty ||
-        phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all personal details')),
-      );
-      return;
-    }
-
-    if (enquiryController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in the Details of Enquiry to proceed'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (selectedDay == null || selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select date and time')),
-      );
-      return;
-    }
+    if (!_validateRequiredFields()) return;
 
     final formatter = DateFormat('yyyy-MM-dd');
 
@@ -193,12 +225,7 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
 
   void _submitAppointment() async {
     if (!isAdd) {
-      if (selectedDay == null || selectedTime == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select date and time')),
-        );
-        return;
-      }
+      if (!_validateRequiredFields()) return;
 
       setState(() => isSubmitting = true);
 
@@ -290,12 +317,14 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                             label: 'Full Name',
                             controller: fullNameController,
                             enabled: inputEnabled,
+                            errorText: _fullNameError,
                           ),
                           const SizedBox(height: 16),
                           AppTextField(
                             label: 'Email Address',
                             controller: emailController,
                             enabled: inputEnabled,
+                            errorText: _emailError,
                           ),
                         ],
                       )
@@ -306,6 +335,7 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                               label: 'Full Name',
                               controller: fullNameController,
                               enabled: inputEnabled,
+                              errorText: _fullNameError,
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -314,6 +344,7 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                               label: 'Email Address',
                               controller: emailController,
                               enabled: inputEnabled,
+                              errorText: _emailError,
                             ),
                           ),
                         ],
@@ -321,7 +352,11 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              PhoneField(controller: phoneController, enabled: inputEnabled),
+              PhoneField(
+                controller: phoneController,
+                enabled: inputEnabled,
+                errorText: _phoneError,
+              ),
               const SizedBox(height: 20),
               TextField(
                 controller: enquiryController,
@@ -329,6 +364,7 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                 enabled: inputEnabled,
                 decoration: InputDecoration(
                   labelText: 'Details of Enquiry',
+                  errorText: _enquiryError,
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -337,12 +373,31 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(
+                      color: _enquiryError != null
+                          ? ThemeConfig.errorColor
+                          : Colors.grey.shade300,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: _enquiryError != null
+                          ? ThemeConfig.errorColor
+                          : const Color(0xFF1E3A8A),
+                      width: 1.5,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1E3A8A),
+                      color: ThemeConfig.errorColor,
+                    ),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: ThemeConfig.errorColor,
                       width: 1.5,
                     ),
                   ),
@@ -362,14 +417,39 @@ class _BookConfirmScreenState extends State<BookConfirmScreen> {
                   disabledDates: disabledDates,
                   disabledWeekdays: disabledWeekdays,
                   selectedOptions: selectedOptions,
-                  onTimeSelected: (time) => selectedTime = time,
-                  selectedDayCallback: (day) => selectedDay = day,
+                  onTimeSelected: (time) {
+                    setState(() {
+                      selectedTime = time;
+                      if (_dateTimeError != null && selectedDay != null) {
+                        _dateTimeError = null;
+                      }
+                    });
+                  },
+                  selectedDayCallback: (day) {
+                    setState(() {
+                      selectedDay = day;
+                      if (_dateTimeError != null && selectedTime != null) {
+                        _dateTimeError = null;
+                      }
+                    });
+                  },
                   preSelectedDay: selectedDay,
                   preSelectedTime: selectedTime,
                   slotDuration: slotDuration,
                   startTime: startTime,
                   endTime: endTime,
                 ),
+              if (_dateTimeError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _dateTimeError!,
+                  style: const TextStyle(
+                    color: ThemeConfig.errorColor,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
               const SizedBox(height: 40),
 
               Row(
@@ -406,24 +486,27 @@ class AppTextField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final bool enabled;
+  final String? errorText;
 
   const AppTextField({
     super.key,
     required this.label,
     required this.controller,
     this.enabled = true,
+    this.errorText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasError = errorText != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: hasError ? ThemeConfig.errorColor : const Color(0xFF374151),
           ),
         ),
         const SizedBox(height: 8),
@@ -433,6 +516,7 @@ class AppTextField extends StatelessWidget {
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white,
+            errorText: errorText,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
@@ -443,12 +527,29 @@ class AppTextField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: hasError
+                    ? ThemeConfig.errorColor
+                    : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: hasError
+                    ? ThemeConfig.errorColor
+                    : const Color(0xFF1E3A8A),
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: ThemeConfig.errorColor),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: Color(0xFF1E3A8A),
+                color: ThemeConfig.errorColor,
                 width: 1.5,
               ),
             ),
@@ -462,19 +563,26 @@ class AppTextField extends StatelessWidget {
 class PhoneField extends StatelessWidget {
   final TextEditingController controller;
   final bool enabled;
+  final String? errorText;
 
-  const PhoneField({super.key, required this.controller, this.enabled = true});
+  const PhoneField({
+    super.key,
+    required this.controller,
+    this.enabled = true,
+    this.errorText,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final hasError = errorText != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Phone Number',
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: hasError ? ThemeConfig.errorColor : const Color(0xFF374151),
           ),
         ),
         const SizedBox(height: 8),
@@ -486,7 +594,11 @@ class PhoneField extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: hasError
+                      ? ThemeConfig.errorColor
+                      : Colors.grey.shade300,
+                ),
               ),
               child: const Center(child: Text('🇦🇺 +61')),
             ),
@@ -500,6 +612,7 @@ class PhoneField extends StatelessWidget {
                   hintText: '000 000 000',
                   filled: true,
                   fillColor: Colors.white,
+                  errorText: errorText,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -510,12 +623,29 @@ class PhoneField extends StatelessWidget {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(
+                      color: hasError
+                          ? ThemeConfig.errorColor
+                          : Colors.grey.shade300,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: hasError
+                          ? ThemeConfig.errorColor
+                          : const Color(0xFF1E3A8A),
+                      width: 1.5,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: ThemeConfig.errorColor),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(
-                      color: Color(0xFF1E3A8A),
+                      color: ThemeConfig.errorColor,
                       width: 1.5,
                     ),
                   ),
@@ -701,6 +831,24 @@ class _CalendarSectionState extends State<CalendarSection> {
           selectedDayPredicate:
               (d) => selectedDay != null && sameDay(selectedDay!, d),
           enabledDayPredicate: (day) => !isDisabled(day),
+          calendarStyle: CalendarStyle(
+            selectedDecoration: const BoxDecoration(
+              color: ThemeConfig.successColor,
+              shape: BoxShape.circle,
+            ),
+            selectedTextStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+            todayDecoration: BoxDecoration(
+              color: ThemeConfig.successColor.withValues(alpha: 0.18),
+              shape: BoxShape.circle,
+            ),
+            todayTextStyle: const TextStyle(
+              color: ThemeConfig.successColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           onDaySelected: (selected, focused) {
             if (isDisabled(selected)) return;
             setState(() {

@@ -10,7 +10,6 @@ const Color _gold = ThemeConfig.goldenYellow;
 const Color _border = Color(0xFFE2E8F0);
 const Color _textPrimary = Color(0xFF1F2937);
 const Color _textMuted = Color(0xFF64748B);
-const Color _goldText = Color(0xFF9A6A00);
 
 class EnglishRequirementSpecifiedTestScoresScreen extends StatelessWidget {
   const EnglishRequirementSpecifiedTestScoresScreen({super.key});
@@ -105,49 +104,82 @@ class _EnglishLanguageRequirementsWidgetState
             ),
           ),
 
-          // ── Effective date toggle ─────────────────────────────────
+          // ── Effective date tabs ────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _labeledCard(
               label: "EFFECTIVE DATE",
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _segment(
-                      "After 7 Aug 2025",
-                      selectedTab == 0,
-                      () => setState(() => selectedTab = 0),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _segment(
+                        "After 7 Aug 2025",
+                        selectedTab == 0,
+                        () => setState(() => selectedTab = 0),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _segment(
-                      "Before 6 Aug 2025",
-                      selectedTab == 1,
-                      () => setState(() => selectedTab = 1),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _segment(
+                        "Before 6 Aug 2025",
+                        selectedTab == 1,
+                        () => setState(() => selectedTab = 1),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // ── Proficiency level selector ────────────────────────────
+          // ── Proficiency level dropdown ────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _labeledCard(
               label: "PROFICIENCY LEVEL",
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(levelTabs.length, (index) {
-                  return _levelChip(
-                    levelTabs[index],
-                    selectedLevelTab == index,
-                    () => setState(() => selectedLevelTab = index),
-                  );
-                }),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _gold.withValues(alpha: 0.45)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: selectedLevelTab,
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: _navy,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    dropdownColor: Colors.white,
+                    items: List.generate(levelTabs.length, (index) {
+                      return DropdownMenuItem<int>(
+                        value: index,
+                        child: Text(
+                          levelTabs[index],
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _navy,
+                          ),
+                        ),
+                      );
+                    }),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => selectedLevelTab = value);
+                    },
+                  ),
+                ),
               ),
             ),
           ),
@@ -240,9 +272,8 @@ class _EnglishLanguageRequirementsWidgetState
         padding: const EdgeInsets.symmetric(vertical: 11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? _navy : Colors.white,
+          color: selected ? _navy : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: selected ? _navy : _border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -257,45 +288,10 @@ class _EnglishLanguageRequirementsWidgetState
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
                   color: selected ? Colors.white : _textPrimary,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _levelChip(String text, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? _gold.withValues(alpha: 0.18) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? _gold : _border,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (selected) ...[
-              const Icon(Icons.check_rounded, size: 14, color: _goldText),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? _goldText : _textPrimary,
               ),
             ),
           ],
