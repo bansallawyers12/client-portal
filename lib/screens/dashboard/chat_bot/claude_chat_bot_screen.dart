@@ -30,11 +30,27 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
 
   // Quick-reply suggestions shown before first user message
   bool _showQuickReplies = true;
-  final List<String> _quickReplies = [
-    '🛂 What visa options are available for me?',
-    '📋 What documents do I need for my application?',
-    '⏱️ How long does the immigration process take?',
-    '📅 How can I book a consultation appointment?',
+  final List<_QuickReply> _quickReplies = const [
+    _QuickReply(
+      icon: Icons.flight_takeoff_rounded,
+      label: 'Visa options',
+      message: 'What visa options are available for me?',
+    ),
+    _QuickReply(
+      icon: Icons.description_outlined,
+      label: 'Documents needed',
+      message: 'What documents do I need for my application?',
+    ),
+    _QuickReply(
+      icon: Icons.schedule_rounded,
+      label: 'Processing time',
+      message: 'How long does the immigration process take?',
+    ),
+    _QuickReply(
+      icon: Icons.calendar_month_rounded,
+      label: 'Book consultation',
+      message: 'How can I book a consultation appointment?',
+    ),
   ];
 
   @override
@@ -351,124 +367,91 @@ class _ClaudeChatBotScreenState extends State<ClaudeChatBotScreen> {
 
   Widget _buildQuickReplies() {
     return Container(
-      color: const Color(0xFFECEFF1),
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
-              'Quick questions — tap to ask:',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-          ...List.generate(_quickReplies.length, (i) {
-            final q = _quickReplies[i];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: GestureDetector(
-                onTap: _isLoading ? null : () => _sendMessage(q),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: ThemeConfig.goldenYellow.withValues(alpha: 0.5),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          q,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: ThemeConfig.goldenYellow,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          GestureDetector(
-            onTap: _isLoading ? null : _openCustomQuery,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: ThemeConfig.goldenYellow.withValues(alpha: 0.5),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Text('✏️', style: TextStyle(fontSize: 15)),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Other — type your own question',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: ThemeConfig.goldenYellow,
-                  ),
-                ],
-              ),
-            ),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: ThemeConfig.navyBlue.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 3.5,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: ThemeConfig.goldenYellow,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Suggestions',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: ThemeConfig.navyBlue,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final reply in _quickReplies)
+                    _SuggestionChip(
+                      icon: reply.icon,
+                      label: reply.label,
+                      onTap:
+                          _isLoading
+                              ? null
+                              : () => _sendMessage(reply.message),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _isLoading ? null : _openCustomQuery,
+                  style: TextButton.styleFrom(
+                    foregroundColor: ThemeConfig.navyBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                  icon: Icon(
+                    Icons.edit_outlined,
+                    size: 16,
+                    color: ThemeConfig.goldenYellow.withValues(alpha: 0.95),
+                  ),
+                  label: const Text(
+                    'Ask something else',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -728,6 +711,64 @@ class _Message extends StatelessWidget {
             ),
             if (isUser) const SizedBox(width: 4),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickReply {
+  final IconData icon;
+  final String label;
+  final String message;
+
+  const _QuickReply({
+    required this.icon,
+    required this.label,
+    required this.message,
+  });
+}
+
+class _SuggestionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _SuggestionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFFF4F6FB),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: ThemeConfig.navyBlue),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeConfig.navyBlue,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
