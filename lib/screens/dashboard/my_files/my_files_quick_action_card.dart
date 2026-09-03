@@ -6,17 +6,25 @@ import '../../../widgets/dialog/login_required_dialog.dart';
 
 class MyFilesQuickActionsCard extends StatelessWidget {
   final VoidCallback? onViewWorkflow;
+  final VoidCallback? onMyFiles;
   final VoidCallback? onBilling;
   final VoidCallback? onMessage;
+  final String? currentStageName;
+  final int progressPercent;
+  final String? matterNumber;
 
   const MyFilesQuickActionsCard({
     super.key,
     this.onViewWorkflow,
+    this.onMyFiles,
     this.onBilling,
     this.onMessage,
+    this.currentStageName,
+    this.progressPercent = 0,
+    this.matterNumber,
   });
 
-  static const double _radius = 14;
+  static const double _radius = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -24,105 +32,295 @@ class MyFilesQuickActionsCard extends StatelessWidget {
       _FileAction(
         icon: Icons.account_tree_rounded,
         label: 'View Workflow',
-        gradient: const [Color(0xFF6A1B9A), Color(0xFFCE93D8)],
+        tint: const Color(0xFFFFF4D6),
+        iconColor: ThemeConfig.goldenYellow,
         onTap: onViewWorkflow ?? () {},
+      ),
+      _FileAction(
+        icon: Icons.folder_open_rounded,
+        label: 'My Files',
+        tint: const Color(0xFFE8F5E9),
+        iconColor: const Color(0xFF2E7D32),
+        onTap: onMyFiles ?? () {},
       ),
       _FileAction(
         icon: Icons.receipt_long_rounded,
         label: 'Billing',
-        gradient: const [Color(0xFFC62828), Color(0xFFEF9A9A)],
+        tint: const Color(0xFFFFF0E6),
+        iconColor: const Color(0xFFE67E22),
         onTap: onBilling ?? () {},
       ),
       _FileAction(
         icon: Icons.chat_bubble_rounded,
         label: 'Messages',
-        gradient: const [Color(0xFF2E7D32), Color(0xFF81C784)],
+        tint: const Color(0xFFF3E8FF),
+        iconColor: const Color(0xFF7C3AED),
         onTap: onMessage ?? () {},
       ),
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_radius),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (AuthService.isAuthenticated) ...[
+          _matterHeroCard(context),
+          const SizedBox(height: 14),
         ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: ThemeConfig.goldenYellow,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'My Files',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: ThemeConfig.navyBlue,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Manage your case, documents and payments',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(_radius),
+            border: Border.all(color: const Color(0xFFEEF1F5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          if (AuthService.isAuthenticated) ...[
-            const SizedBox(height: 16),
-            _matterSelector(context),
-          ],
-          const SizedBox(height: 16),
-          Column(
+          child: Row(
+            children: [
+              for (int i = 0; i < actions.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: _actionTile(context: context, action: actions[i]),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _matterHeroCard(BuildContext context) {
+    final matterName =
+        AuthService.selectedMatterName ?? 'No matter selected';
+    final stage =
+        (currentStageName != null && currentStageName!.trim().isNotEmpty)
+            ? currentStageName!
+            : 'Not started';
+    final progress = progressPercent.clamp(0, 100);
+    final matterNo = (matterNumber != null && matterNumber!.trim().isNotEmpty)
+        ? matterNumber!
+        : null;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(_radius),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(_radius),
+        onTap: () => _openSwitchDialog(context),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [ThemeConfig.navyBlue, Color(0xFF2D3B8F)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(_radius),
+            boxShadow: [
+              BoxShadow(
+                color: ThemeConfig.navyBlue.withValues(alpha: 0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _actionTile(context: context, action: actions[0]),
-                        const SizedBox(height: 14),
-                        _actionTile(context: context, action: actions[2]),
+                        Text(
+                          'ACTIVE MATTER',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.0,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.folder_special_rounded,
+                                color: ThemeConfig.goldenYellow,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    matterName,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15.5,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.3,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                  if (matterNo != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      matterNo,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.swap_horiz_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Switch Case',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Stage',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.65),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          stage,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _actionTile(context: context, action: actions[1]),
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Progress',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.white.withValues(alpha: 0.65),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$progress%',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: ThemeConfig.goldenYellow,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress / 100,
+                            minHeight: 5,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.18,
+                            ),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              ThemeConfig.goldenYellow,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -133,260 +331,143 @@ class MyFilesQuickActionsCard extends StatelessWidget {
   }) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(_radius),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: () => _handleAuth(context, action.onTap),
-        borderRadius: BorderRadius.circular(_radius),
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: action.gradient,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(_radius),
-            boxShadow: [
-              BoxShadow(
-                color: action.gradient.first.withValues(alpha: 0.28),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: action.tint,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(action.icon, color: action.iconColor, size: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                action.label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: ThemeConfig.navyBlue,
+                  height: 1.2,
+                ),
               ),
             ],
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 108),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(action.icon, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    action.label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                      height: 1.25,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _matterSelector(BuildContext context) {
-    void openDialog() {
-      final screenWidth = MediaQuery.of(context).size.width;
-      final isWide = screenWidth >= 600;
-      final dialogWidth =
-          isWide ? (screenWidth > 1024 ? 440.0 : 400.0) : screenWidth * 0.92;
+  void _openSwitchDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 600;
+    final dialogWidth =
+        isWide ? (screenWidth > 1024 ? 440.0 : 400.0) : screenWidth * 0.92;
 
-      showDialog(
-        context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.45),
-        builder:
-            (dialogContext) => Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(_radius),
-              ),
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              insetPadding: EdgeInsets.symmetric(
-                horizontal: isWide ? 40 : 16,
-                vertical: 24,
-              ),
-              child: SizedBox(
-                width: dialogWidth,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: ThemeConfig.surfaceLight,
-                    borderRadius: BorderRadius.circular(_radius),
-                    boxShadow: [
-                      BoxShadow(
-                        color: ThemeConfig.navyBlue.withValues(alpha: 0.14),
-                        blurRadius: 32,
-                        offset: const Offset(0, 12),
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_radius),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: isWide ? 40 : 16,
+          vertical: 24,
+        ),
+        child: SizedBox(
+          width: dialogWidth,
+          child: Container(
+            decoration: BoxDecoration(
+              color: ThemeConfig.surfaceLight,
+              borderRadius: BorderRadius.circular(_radius),
+              boxShadow: [
+                BoxShadow(
+                  color: ThemeConfig.navyBlue.withValues(alpha: 0.14),
+                  blurRadius: 32,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.all(isWide ? 28 : 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: ThemeConfig.goldenYellow.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(_radius),
                       ),
-                    ],
-                  ),
-                  padding: EdgeInsets.all(isWide ? 28 : 22),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: ThemeConfig.goldenYellow.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(_radius),
-                            ),
-                            child: const Icon(
-                              Icons.folder_special_rounded,
-                              color: ThemeConfig.goldenYellow,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Text(
-                              'Switch matter',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: ThemeConfig.navyBlue,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(dialogContext),
-                            icon: const Icon(Icons.close_rounded),
-                            color: ThemeConfig.textSecondaryLight,
-                          ),
-                        ],
+                      child: const Icon(
+                        Icons.folder_special_rounded,
+                        color: ThemeConfig.goldenYellow,
+                        size: 22,
                       ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(dialogContext);
-                            Navigator.pushNamed(
-                              context,
-                              '/matters',
-                              arguments: {'from_my_files': true},
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ThemeConfig.goldenYellow,
-                            foregroundColor: ThemeConfig.navyBlue,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(_radius),
-                            ),
-                          ),
-                          icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                          label: const Text(
-                            'Choose matter',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Text(
+                        'Switch matter',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: ThemeConfig.navyBlue,
                         ),
                       ),
-                    ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      icon: const Icon(Icons.close_rounded),
+                      color: ThemeConfig.textSecondaryLight,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.pushNamed(
+                        context,
+                        '/matters',
+                        arguments: {'from_my_files': true},
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ThemeConfig.goldenYellow,
+                      foregroundColor: ThemeConfig.navyBlue,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(_radius),
+                      ),
+                    ),
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                    label: const Text(
+                      'Choose matter',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-      );
-    }
-
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(_radius),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(_radius),
-        onTap: openDialog,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: ThemeConfig.goldenYellow.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(_radius),
-            border: Border.all(
-              color: ThemeConfig.goldenYellow.withValues(alpha: 0.35),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: ThemeConfig.goldenYellow.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(_radius),
-                ),
-                child: const Icon(
-                  Icons.folder_special_rounded,
-                  color: ThemeConfig.goldenYellow,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'ACTIVE MATTER',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: ThemeConfig.textSecondaryLight,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      AuthService.selectedMatterName ?? 'No matter selected',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: ThemeConfig.navyBlue,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: ThemeConfig.goldenYellow,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.swap_horiz_rounded,
-                      color: ThemeConfig.white,
-                      size: 14,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Switch',
-                      style: TextStyle(
-                        color: ThemeConfig.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -409,13 +490,15 @@ class MyFilesQuickActionsCard extends StatelessWidget {
 class _FileAction {
   final IconData icon;
   final String label;
-  final List<Color> gradient;
+  final Color tint;
+  final Color iconColor;
   final VoidCallback onTap;
 
   const _FileAction({
     required this.icon,
     required this.label,
-    required this.gradient,
+    required this.tint,
+    required this.iconColor,
     required this.onTap,
   });
 }
