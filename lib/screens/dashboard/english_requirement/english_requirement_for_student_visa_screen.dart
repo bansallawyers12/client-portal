@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme_config.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/responsive_utils.dart';
 import '../../../widgets/common_app_bar.dart';
@@ -136,38 +137,74 @@ class _EnglishRequirementForStudentVisaScreenState
                   padding: AppResponsive.horizontalPadding(context),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.indigo.shade50,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.indigo.shade200),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: List.generate(filters.length, (index) {
-                        final isSelected = selectedFilter == filters[index];
-
-                        return ChoiceChip(
-                          label: Text(filters[index]),
-                          selected: isSelected,
-                          selectedColor: Colors.indigo,
-                          backgroundColor: Colors.white,
-                          showCheckmark: false,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.indigo,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TEST TYPE',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.indigo.shade200),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: ThemeConfig.goldenYellow.withValues(
+                                alpha: 0.45,
+                              ),
+                            ),
                           ),
-                          onSelected: (_) {
-                            setState(() => selectedFilter = filters[index]);
-                          },
-                        );
-                      }),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedFilter,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: ThemeConfig.navyBlue,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              dropdownColor: Colors.white,
+                              items: filters.map((filter) {
+                                return DropdownMenuItem<String>(
+                                  value: filter,
+                                  child: Text(
+                                    filter,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: ThemeConfig.navyBlue,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() => selectedFilter = value);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
