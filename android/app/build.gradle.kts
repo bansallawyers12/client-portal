@@ -21,7 +21,7 @@ val keystoreProperties = Properties().apply {
 android {
     namespace = "com.bansalimmigration.clientportal"
     compileSdk = 36
-    ndkVersion = "27.1.12297006"
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId = "com.bansalimmigration.clientportal"
