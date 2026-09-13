@@ -4,6 +4,7 @@ import 'package:client/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../config/client_stage_mapping.dart';
 import '../../../config/theme_config.dart';
 import '../../../main.dart';
 import '../../../models/action_required.dart';
@@ -775,16 +776,21 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
       return const Center(child: AppLoader());
     }
 
-    final currentStage =
-        _workflow?.activeStage?.stageName ??
-        _workflow?.activeStage?.name;
+    final currentStage = _workflow?.currentDisplayName;
     final progress = _workflow?.progressPercentage ?? 0;
     final matterNo = _workflow?.activeStage?.clientMatterNo;
+    final statusTag = _workflow?.currentStatusTag;
 
     final quickActionsCard = MyFilesQuickActionsCard(
-      currentStageName: currentStage,
+      currentStageName:
+          (currentStage != null && currentStage.isNotEmpty)
+              ? currentStage
+              : null,
       progressPercent: progress,
       matterNumber: matterNo,
+      statusTagLabel: statusTag?.label,
+      statusTagColor: statusTag?.foreground,
+      statusTagBackground: statusTag?.background,
       onViewWorkflow: () {
         Navigator.pushNamed(
           context,
@@ -1195,27 +1201,31 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
   Widget _buildCaseStagesSection() {
     if (_workflow == null) return const SizedBox.shrink();
 
-    final stages = _workflow!.workflowStages;
-    if (stages.isEmpty) return const SizedBox.shrink();
+    final steps = _workflow!.clientTimelineSteps;
+    if (steps.isEmpty) return const SizedBox.shrink();
 
-    final currentIndex = _workflow!.currentStageIndex;
+    final currentStep = _workflow!.currentClientStepIndex;
+    // Show previous + current (+ next) client steps, not raw CRM rows
     final start =
-        currentIndex <= 0 ? 0 : (currentIndex - 1).clamp(0, stages.length - 1);
-    final end = (currentIndex < 0 ? 0 : currentIndex)
-        .clamp(0, stages.length - 1);
-    final visible = <({WorkflowStage stage, int index})>[];
-    for (int i = start; i <= end && i < stages.length; i++) {
-      visible.add((stage: stages[i], index: i));
+        currentStep <= 0 ? 0 : (currentStep - 1).clamp(0, steps.length - 1);
+    final end = (currentStep < 0 ? 0 : (currentStep + 1))
+        .clamp(0, steps.length - 1);
+    final visible = <({String label, int index})>[];
+    for (int i = start; i <= end && i < steps.length; i++) {
+      visible.add((label: steps[i], index: i));
     }
     if (visible.isEmpty) {
-      visible.add((stage: stages.first, index: 0));
+      visible.add((label: steps.first, index: 0));
     }
+
+    final hasOpenTasks = (_workflow!.currentStage?.allowedChecklistCount ?? 0) >
+        0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sectionHeader(
-          'Case Stages',
+          'Timeline',
           onViewAll: () {
             Navigator.pushNamed(
               context,
@@ -1241,12 +1251,25 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
           child: Column(
             children: [
               for (int i = 0; i < visible.length; i++)
-                _stageTimelineRow(
-                  stage: visible[i].stage,
+                _clientTimelineRow(
+                  label: visible[i].label,
                   number: visible[i].index + 1,
                   isLast: i == visible.length - 1,
-                  currentIndex: currentIndex,
-                  stageIndex: visible[i].index,
+                  currentIndex: currentStep,
+                  stepIndex: visible[i].index,
+                ),
+              if (!hasOpenTasks)
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(8, 4, 8, 12),
+                  child: Text(
+                    'Nothing needed from you right now — we’ll notify you of any updates.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF94A3B8),
+                      height: 1.35,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -1256,16 +1279,16 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
   }
 
-  Widget _stageTimelineRow({
-    required WorkflowStage stage,
+  Widget _clientTimelineRow({
+    required String label,
     required int number,
     required bool isLast,
     required int currentIndex,
-    required int stageIndex,
+    required int stepIndex,
   }) {
-    final isCompleted = currentIndex >= 0 && stageIndex < currentIndex;
-    final isCurrent = stage.isCurrentStage ||
-        (currentIndex >= 0 && stageIndex == currentIndex);
+    final isCompleted = currentIndex >= 0 && stepIndex < currentIndex;
+    final isCurrent =
+        currentIndex >= 0 && stepIndex == currentIndex;
     final statusLabel = isCompleted
         ? 'Completed'
         : (isCurrent ? 'In Progress' : 'Upcoming');
@@ -1291,23 +1314,31 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: Text(
-                    '$number',
-                    style: TextStyle(
-                      color: (isCompleted || isCurrent)
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+                  child: isCompleted
+                      ? const Icon(
+                        Icons.check_rounded,
+                        size: 14,
+                        color: Colors.white,
+                      )
+                      : Text(
+                        '$number',
+                        style: TextStyle(
+                          color: isCurrent
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
-                      color: ThemeConfig.navyBlue.withValues(alpha: 0.25),
+                      color: isCompleted
+                          ? const Color(0xFFBADFCB)
+                          : ThemeConfig.navyBlue.withValues(alpha: 0.25),
                     ),
                   ),
               ],
@@ -1325,13 +1356,16 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          stage.stageName.isNotEmpty
-                              ? stage.stageName
-                              : stage.name,
-                          style: const TextStyle(
+                          label,
+                          style: TextStyle(
                             fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: ThemeConfig.navyBlue,
+                            fontWeight:
+                                isCurrent ? FontWeight.w800 : FontWeight.w700,
+                            color: isCurrent
+                                ? ThemeConfig.navyBlue
+                                : (isCompleted
+                                    ? const Color(0xFF64748B)
+                                    : ThemeConfig.navyBlue),
                             height: 1.3,
                           ),
                         ),
@@ -1347,12 +1381,6 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                       ],
                     ),
                   ),
-                  if (isCompleted)
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: Color(0xFF16A34A),
-                      size: 20,
-                    ),
                 ],
               ),
             ),

@@ -12,6 +12,10 @@ class MyFilesQuickActionsCard extends StatelessWidget {
   final String? currentStageName;
   final int progressPercent;
   final String? matterNumber;
+  /// e.g. "With Bansal" / "Action required"
+  final String? statusTagLabel;
+  final Color? statusTagColor;
+  final Color? statusTagBackground;
 
   const MyFilesQuickActionsCard({
     super.key,
@@ -22,6 +26,9 @@ class MyFilesQuickActionsCard extends StatelessWidget {
     this.currentStageName,
     this.progressPercent = 0,
     this.matterNumber,
+    this.statusTagLabel,
+    this.statusTagColor,
+    this.statusTagBackground,
   });
 
   static const double _radius = 18;
@@ -257,6 +264,29 @@ class MyFilesQuickActionsCard extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        if (statusTagLabel != null &&
+                            statusTagLabel!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusTagBackground ??
+                                  Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              statusTagLabel!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: statusTagColor ?? Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Text(
                           stage,

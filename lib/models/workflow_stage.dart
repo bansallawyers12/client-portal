@@ -1,3 +1,5 @@
+import '../config/client_stage_mapping.dart';
+
 class ChecklistItem {
   final int id;
   final String name;
@@ -14,7 +16,7 @@ class ChecklistItem {
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name'] ?? '',
       noOfDocumentUploaded:
-      int.tryParse(json['no_of_document_uploaded']?.toString() ?? '') ?? 0,
+          int.tryParse(json['no_of_document_uploaded']?.toString() ?? '') ?? 0,
     );
   }
 
@@ -31,6 +33,8 @@ class WorkflowStage {
   final int id;
   final String name;
   final String stageName;
+  /// Client-facing label from API (`client_label`), e.g. "Getting started".
+  final String? clientLabel;
   final bool isActive;
   final bool isCurrentStage;
   final String? createdAt;
@@ -42,6 +46,7 @@ class WorkflowStage {
     required this.id,
     required this.name,
     required this.stageName,
+    this.clientLabel,
     this.isActive = false,
     this.isCurrentStage = false,
     this.createdAt,
@@ -58,10 +63,15 @@ class WorkflowStage {
           .toList();
     }
 
+    final crmName = (json['stage_name'] ?? json['name'] ?? '').toString();
+    final apiLabel = json['client_label']?.toString().trim();
+
     return WorkflowStage(
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name'] ?? '',
-      stageName: json['stage_name'] ?? json['name'] ?? '',
+      stageName: crmName,
+      clientLabel:
+          (apiLabel != null && apiLabel.isNotEmpty) ? apiLabel : null,
       isActive: json['is_active'] ?? false,
       isCurrentStage: json['is_current_stage'] ?? false,
       createdAt: json['created_at'],
@@ -71,11 +81,34 @@ class WorkflowStage {
     );
   }
 
+  /// Prefer API `client_label`, then prototype mapping, then CRM name.
+  String get displayName => clientDisplayName(
+        clientLabel: clientLabel,
+        crmName: stageName.isNotEmpty ? stageName : name,
+        fallback: name,
+      );
+
+  ClientStageMapping? get mapping =>
+      findClientStageMapping(stageName.isNotEmpty ? stageName : name);
+
+  bool get isSilent => mapping?.silent ?? false;
+
+  ClientStageTag get statusTag => clientStageTag(
+        crmName: stageName.isNotEmpty ? stageName : name,
+        clientLabel: clientLabel,
+      );
+
+  int get mappedProgressPercent => clientProgressPercent(
+        clientLabel: clientLabel,
+        crmName: stageName.isNotEmpty ? stageName : name,
+      );
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
       'stage_name': stageName,
+      'client_label': clientLabel,
       'is_active': isActive,
       'is_current_stage': isCurrentStage,
       'created_at': createdAt,
@@ -92,15 +125,15 @@ class WorkflowStage {
 
   @override
   String toString() {
-    return 'WorkflowStage(id: $id, name: $name, isActive: $isActive)';
+    return 'WorkflowStage(id: $id, name: $name, displayName: $displayName, isActive: $isActive)';
   }
 }
-
 
 class ActiveStageInfo {
   final int id;
   final String name;
   final String stageName;
+  final String? clientLabel;
   final String? clientMatterNo;
   final int? matterStatus;
   final String? stageUpdatedAt;
@@ -110,6 +143,7 @@ class ActiveStageInfo {
     required this.id,
     required this.name,
     required this.stageName,
+    this.clientLabel,
     this.clientMatterNo,
     this.matterStatus,
     this.stageUpdatedAt,
@@ -117,16 +151,36 @@ class ActiveStageInfo {
   });
 
   factory ActiveStageInfo.fromJson(Map<String, dynamic> json) {
+    final crmName = (json['stage_name'] ?? json['name'] ?? '').toString();
+    final apiLabel = json['client_label']?.toString().trim();
     return ActiveStageInfo(
       id: _parseInt(json['id']) ?? 0,
       name: json['name'] ?? '',
-      stageName: json['stage_name'] ?? json['name'] ?? '',
+      stageName: crmName,
+      clientLabel:
+          (apiLabel != null && apiLabel.isNotEmpty) ? apiLabel : null,
       clientMatterNo: json['client_matter_no'],
       matterStatus: _parseInt(json['matter_status']),
       stageUpdatedAt: json['stage_updated_at'],
       isActive: json['is_active'] ?? true,
     );
   }
+
+  String get displayName => clientDisplayName(
+        clientLabel: clientLabel,
+        crmName: stageName.isNotEmpty ? stageName : name,
+        fallback: name,
+      );
+
+  ClientStageTag get statusTag => clientStageTag(
+        crmName: stageName.isNotEmpty ? stageName : name,
+        clientLabel: clientLabel,
+      );
+
+  int get mappedProgressPercent => clientProgressPercent(
+        clientLabel: clientLabel,
+        crmName: stageName.isNotEmpty ? stageName : name,
+      );
 
   static int? _parseInt(dynamic value) {
     if (value == null) return null;
@@ -140,6 +194,7 @@ class ActiveStageInfo {
       'id': id,
       'name': name,
       'stage_name': stageName,
+      'client_label': clientLabel,
       'client_matter_no': clientMatterNo,
       'matter_status': matterStatus,
       'stage_updated_at': stageUpdatedAt,
@@ -178,6 +233,27 @@ class WorkflowStagesResponse {
     ActiveStageInfo? activeStageInfo;
     if (json['active_stage'] != null) {
       activeStageInfo = ActiveStageInfo.fromJson(json['active_stage']);
+      // Enrich client_label from the matching stage row when active_stage omits it
+      if ((activeStageInfo.clientLabel == null ||
+              activeStageInfo.clientLabel!.isEmpty) &&
+          activeStageInfo.id != 0) {
+        final match = stagesList.where((s) => s.id == activeStageInfo!.id);
+        if (match.isNotEmpty &&
+            match.first.clientLabel != null &&
+            match.first.clientLabel!.isNotEmpty) {
+          final m = match.first;
+          activeStageInfo = ActiveStageInfo(
+            id: activeStageInfo.id,
+            name: activeStageInfo.name,
+            stageName: activeStageInfo.stageName,
+            clientLabel: m.clientLabel,
+            clientMatterNo: activeStageInfo.clientMatterNo,
+            matterStatus: activeStageInfo.matterStatus,
+            stageUpdatedAt: activeStageInfo.stageUpdatedAt,
+            isActive: activeStageInfo.isActive,
+          );
+        }
+      }
     }
 
     CaseSummary? summary;
@@ -208,9 +284,68 @@ class WorkflowStagesResponse {
     return workflowStages.indexWhere((stage) => stage.id == activeStage!.id);
   }
 
+  WorkflowStage? get currentStage {
+    final i = currentStageIndex;
+    if (i < 0 || i >= workflowStages.length) return null;
+    return workflowStages[i];
+  }
+
+  /// Client-facing progress from prototype mapping (preferred) or index fallback.
   int get progressPercentage {
+    final current = currentStage;
+    if (current != null) {
+      return current.mappedProgressPercent;
+    }
+    if (activeStage != null) {
+      return activeStage!.mappedProgressPercent;
+    }
     if (totalStages == 0 || currentStageIndex < 0) return 0;
     return ((currentStageIndex / totalStages) * 100).round();
+  }
+
+  String get currentDisplayName {
+    final current = currentStage;
+    if (current != null) return current.displayName;
+    if (activeStage != null) return activeStage!.displayName;
+    return '';
+  }
+
+  ClientStageTag get currentStatusTag {
+    final current = currentStage;
+    if (current != null) return current.statusTag;
+    if (activeStage != null) return activeStage!.statusTag;
+    return ClientStageTag.bansal;
+  }
+
+  /// Unique non-silent client timeline labels in order of first appearance.
+  List<String> get clientTimelineSteps {
+    final seen = <String>{};
+    final steps = <String>[];
+    for (final stage in workflowStages) {
+      if (stage.isSilent) continue;
+      final label = stage.displayName;
+      if (label.isEmpty || seen.contains(label)) continue;
+      seen.add(label);
+      steps.add(label);
+    }
+    if (steps.isNotEmpty) return steps;
+    return List<String>.from(kClientTimelineSteps);
+  }
+
+  int get currentClientStepIndex {
+    final name = currentDisplayName;
+    if (name.isEmpty) return -1;
+    final steps = clientTimelineSteps;
+    final i = steps.indexOf(name);
+    if (i >= 0) return i;
+    // RFI overlays lodged step
+    if (name.toLowerCase().contains('more info')) {
+      final lodged = steps.indexWhere(
+        (s) => s.toLowerCase().contains('lodged'),
+      );
+      return lodged >= 0 ? lodged : -1;
+    }
+    return -1;
   }
 
   int get completedStages {
@@ -223,8 +358,6 @@ class WorkflowStagesResponse {
     return totalStages - currentStageIndex - 1;
   }
 }
-
-
 
 class CaseSummary {
   final String? caseName;
@@ -261,4 +394,3 @@ class CaseSummary {
     };
   }
 }
-

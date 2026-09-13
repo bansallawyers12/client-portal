@@ -211,7 +211,7 @@ class WorkflowProgressWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(
-                'Current Stage: ${workflowResponse.activeStage!.stageName}',
+                'Current Stage: ${workflowResponse.currentDisplayName}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -461,7 +461,7 @@ class WorkflowProgressWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${stage.stageName} (${stage.allowedChecklistCount})',
+                    '${stage.displayName} (${stage.allowedChecklistCount})',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -544,7 +544,9 @@ class CompactWorkflowProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = workflowResponse.progressPercentage;
     final currentStageName =
-        workflowResponse.activeStage?.stageName ?? 'Not Started';
+        workflowResponse.currentDisplayName.isNotEmpty
+            ? workflowResponse.currentDisplayName
+            : 'Not Started';
 
     return Container(
       padding: const EdgeInsets.all(12),

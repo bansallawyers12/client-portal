@@ -403,7 +403,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
         arguments: {
           'matter_id': widget.matterID,
           'stageId': stage.id,
-          'stageName': stage.stageName,
+          'stageName': stage.displayName,
           'checklistId': checklistId,
         },
       );
@@ -674,7 +674,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
         context: context,
         builder: (context) => AlertDialog(
           title: Text(
-            stage.stageName,
+            stage.displayName,
             style: const TextStyle(color: ThemeConfig.navyBlue),
           ),
           content: Column(

@@ -22,7 +22,9 @@ class WorkflowTimelineWidget extends StatelessWidget {
   Widget _buildCompactView(BuildContext context) {
     final progress = workflowResponse.progressPercentage;
     final currentStageName =
-        workflowResponse.activeStage?.stageName ?? 'Not Started';
+        workflowResponse.currentDisplayName.isNotEmpty
+            ? workflowResponse.currentDisplayName
+            : 'Not Started';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -225,7 +227,7 @@ class WorkflowTimelineWidget extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              stage.stageName,
+              stage.displayName,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,

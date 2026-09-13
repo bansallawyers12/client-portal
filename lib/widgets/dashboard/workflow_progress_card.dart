@@ -20,7 +20,10 @@ class WorkflowProgressCard extends StatelessWidget {
     if (workflowResponse == null) return const SizedBox.shrink();
 
     final progress = workflowResponse!.progressPercentage;
-    final currentStageName = workflowResponse!.activeStage?.stageName ?? 'Not Started';
+    final currentStageName =
+        workflowResponse!.currentDisplayName.isNotEmpty
+            ? workflowResponse!.currentDisplayName
+            : 'Not Started';
     final hasActiveStage = workflowResponse!.hasActiveStage;
 
     return GestureDetector(
