@@ -318,7 +318,13 @@ class WorkflowStagesResponse {
   }
 
   /// Unique non-silent client timeline labels in order of first appearance.
-  List<String> get clientTimelineSteps {
+  /// Prefer the curated 9-step client journey from the portal mapping prototype
+  /// so the UI always matches the designed timeline.
+  List<String> get clientTimelineSteps =>
+      List<String>.from(kClientTimelineSteps);
+
+  /// Ordered unique client labels actually present in this matter's CRM stages.
+  List<String> get matterClientLabels {
     final seen = <String>{};
     final steps = <String>[];
     for (final stage in workflowStages) {
@@ -328,8 +334,7 @@ class WorkflowStagesResponse {
       seen.add(label);
       steps.add(label);
     }
-    if (steps.isNotEmpty) return steps;
-    return List<String>.from(kClientTimelineSteps);
+    return steps;
   }
 
   int get currentClientStepIndex {

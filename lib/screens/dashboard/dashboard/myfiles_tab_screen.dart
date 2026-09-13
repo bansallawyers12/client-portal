@@ -1205,27 +1205,25 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     if (steps.isEmpty) return const SizedBox.shrink();
 
     final currentStep = _workflow!.currentClientStepIndex;
-    // Show previous + current (+ next) client steps, not raw CRM rows
-    final start =
-        currentStep <= 0 ? 0 : (currentStep - 1).clamp(0, steps.length - 1);
-    final end = (currentStep < 0 ? 0 : (currentStep + 1))
-        .clamp(0, steps.length - 1);
-    final visible = <({String label, int index})>[];
-    for (int i = start; i <= end && i < steps.length; i++) {
-      visible.add((label: steps[i], index: i));
-    }
-    if (visible.isEmpty) {
-      visible.add((label: steps.first, index: 0));
-    }
-
-    final hasOpenTasks = (_workflow!.currentStage?.allowedChecklistCount ?? 0) >
-        0;
+    final progress = _workflow!.progressPercentage.clamp(0, 100);
+    final statusTag = _workflow!.currentStatusTag;
+    final stageTitle =
+        _workflow!.currentDisplayName.isNotEmpty
+            ? _workflow!.currentDisplayName
+            : 'Getting started';
+    final updatedLabel = _formatStageUpdated(
+      _workflow!.activeStage?.stageUpdatedAt ??
+          _workflow!.currentStage?.updatedAt,
+    );
+    final hasOpenTasks =
+        (_workflow!.currentStage?.allowedChecklistCount ?? 0) > 0;
+    final isDept = statusTag == ClientStageTag.dept;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sectionHeader(
-          'Timeline',
+          'Your application',
           onViewAll: () {
             Navigator.pushNamed(
               context,
@@ -1234,12 +1232,13 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
             );
           },
         ),
+        // Prototype-style current stage hero
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFEEF1F5)),
+            border: Border.all(color: const Color(0xFFE2E7ED)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.03),
@@ -1249,24 +1248,148 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (int i = 0; i < visible.length; i++)
+              Row(
+                children: [
+                  const Text(
+                    'Current stage',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF7A8794),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusTag.background,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    child: Text(
+                      statusTag.label,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: statusTag.foreground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                stageTitle,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF12253A),
+                  letterSpacing: -0.2,
+                  height: 1.25,
+                ),
+              ),
+              if (isDept) ...[
+                const SizedBox(height: 6),
+                const Text(
+                  'Your file is with the Department of Home Affairs.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF7A8794),
+                    height: 1.3,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: progress / 100,
+                  minHeight: 6,
+                  backgroundColor: const Color(0xFFF4F6F9),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Color(0xFF1F8A5B),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    '$progress% complete',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF7A8794),
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                  const Spacer(),
+                  if (updatedLabel != null)
+                    Text(
+                      updatedLabel,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF7A8794),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Full client timeline (all 9 steps like prototype)
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E7ED)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 2, bottom: 10),
+                child: Text(
+                  'TIMELINE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.7,
+                    color: Color(0xFF7A8794),
+                  ),
+                ),
+              ),
+              for (int i = 0; i < steps.length; i++)
                 _clientTimelineRow(
-                  label: visible[i].label,
-                  number: visible[i].index + 1,
-                  isLast: i == visible.length - 1,
+                  label: steps[i],
+                  number: i + 1,
+                  isLast: i == steps.length - 1,
                   currentIndex: currentStep,
-                  stepIndex: visible[i].index,
+                  stepIndex: i,
                 ),
               if (!hasOpenTasks)
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(8, 4, 8, 12),
+                  padding: EdgeInsets.fromLTRB(4, 2, 4, 10),
                   child: Text(
                     'Nothing needed from you right now — we’ll notify you of any updates.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF94A3B8),
+                      color: Color(0xFF7A8794),
                       height: 1.35,
                     ),
                   ),
@@ -1279,6 +1402,31 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
   }
 
+  String? _formatStageUpdated(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      final dt = DateTime.tryParse(raw.replaceFirst(' ', 'T'));
+      if (dt == null) return null;
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      return 'Updated ${dt.day} ${months[dt.month - 1]}';
+    } catch (_) {
+      return null;
+    }
+  }
+
   Widget _clientTimelineRow({
     required String label,
     required int number,
@@ -1287,58 +1435,70 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     required int stepIndex,
   }) {
     final isCompleted = currentIndex >= 0 && stepIndex < currentIndex;
-    final isCurrent =
-        currentIndex >= 0 && stepIndex == currentIndex;
-    final statusLabel = isCompleted
-        ? 'Completed'
-        : (isCurrent ? 'In Progress' : 'Upcoming');
-    final statusColor = isCompleted
-        ? const Color(0xFF16A34A)
-        : (isCurrent ? ThemeConfig.goldenYellow : const Color(0xFF94A3B8));
+    final isCurrent = currentIndex >= 0 && stepIndex == currentIndex;
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 28,
+            width: 22,
             child: Column(
               children: [
                 Container(
-                  width: 26,
-                  height: 26,
+                  width: 18,
+                  height: 18,
                   decoration: BoxDecoration(
-                    color: (isCompleted || isCurrent)
-                        ? ThemeConfig.navyBlue
-                        : const Color(0xFFE2E8F0),
+                    color: isCompleted
+                        ? const Color(0xFF1F8A5B)
+                        : Colors.white,
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isCompleted
+                          ? const Color(0xFF1F8A5B)
+                          : (isCurrent
+                              ? const Color(0xFF3B6EA5)
+                              : const Color(0xFFE2E7ED)),
+                      width: 2,
+                    ),
+                    boxShadow: isCurrent
+                        ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF3B6EA5,
+                            ).withValues(alpha: 0.22),
+                            blurRadius: 0,
+                            spreadRadius: 3,
+                          ),
+                        ]
+                        : null,
                   ),
                   alignment: Alignment.center,
                   child: isCompleted
                       ? const Icon(
                         Icons.check_rounded,
-                        size: 14,
+                        size: 11,
                         color: Colors.white,
                       )
-                      : Text(
-                        '$number',
-                        style: TextStyle(
-                          color: isCurrent
-                              ? Colors.white
-                              : const Color(0xFF64748B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      : (isCurrent
+                          ? Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF3B6EA5),
+                              shape: BoxShape.circle,
+                            ),
+                          )
+                          : null),
                 ),
                 if (!isLast)
                   Expanded(
                     child: Container(
                       width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 3),
                       color: isCompleted
                           ? const Color(0xFFBADFCB)
-                          : ThemeConfig.navyBlue.withValues(alpha: 0.25),
+                          : const Color(0xFFE2E7ED),
                     ),
                   ),
               ],
@@ -1347,41 +1507,19 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 8 : 18),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight:
-                                isCurrent ? FontWeight.w800 : FontWeight.w700,
-                            color: isCurrent
-                                ? ThemeConfig.navyBlue
-                                : (isCompleted
-                                    ? const Color(0xFF64748B)
-                                    : ThemeConfig.navyBlue),
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          statusLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: statusColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              padding: EdgeInsets.only(bottom: isLast ? 6 : 14),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                  color: isCurrent
+                      ? const Color(0xFF12253A)
+                      : (isCompleted
+                          ? const Color(0xFF7A8794)
+                          : const Color(0xFF3A4B5E)),
+                  height: 1.3,
+                ),
               ),
             ),
           ),
