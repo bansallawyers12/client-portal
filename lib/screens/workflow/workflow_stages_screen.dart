@@ -49,7 +49,6 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
   String? _selectedFileName;
 
   final List<String> _tabs = ['all', 'pending', 'completed'];
-  bool _stagesExpanded = false;
 
   @override
   void initState() {
@@ -59,7 +58,6 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
 
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
-        setState(() => _stagesExpanded = false);
         _loadWorkflowData(type: _tabs[_tabController.index]);
       }
     });
@@ -381,20 +379,6 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
     );
   }
 
-  Future<void> _onBulkUploadTap() async {
-    await Navigator.pushNamed(
-      context,
-      '/bulk-upload-documents',
-      arguments: {
-        'matter_id': widget.matterID,
-        'stageId': null,
-        'allowedChecklistId': null,
-      },
-    );
-
-    _loadWorkflowData(type: _tabs[_tabController.index]);
-  }
-
   Future<void> _onViewTap(WorkflowStage stage, int checklistId) async {
     if (stage.allowedChecklistCount > 0) {
       Navigator.pushNamed(
@@ -550,28 +534,18 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
                           crossAxisAlignment:
                           CrossAxisAlignment.start,
                           children: [
-                            if (_workflowResponse!.caseSummary !=
-                                null)
-                              _buildCaseSummary(
-                                _workflowResponse!.caseSummary!,
-                              ),
-
-                            const SizedBox(height: 20),
-
                             WorkflowProgressWidget(
                               workflowResponse:
                               _workflowResponse!,
                               tabType: _tabs[_tabController.index],
-                              stagesExpanded: _stagesExpanded,
-                              onSeeAllTap:
-                                  () => setState(() => _stagesExpanded = true),
-                              onSeeLessTap:
-                                  () => setState(() => _stagesExpanded = false),
+                              stagesExpanded: true,
+                              onSeeAllTap: null,
+                              onSeeLessTap: null,
                               onStageTap: _showStageDetails,
                               onChecklistPlusTap:
                               _openUploadOptions,
                               onChecklistViewTap: _onViewTap,
-                              onBulkUploadTap: _onBulkUploadTap,
+                              onBulkUploadTap: null,
                             ),
                           ],
                         ),
@@ -591,53 +565,6 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
     return Tab(
       height: 46,
       child: Row(mainAxisSize: MainAxisSize.min, children: [Text(label)]),
-    );
-  }
-
-  Widget _buildCaseSummary(CaseSummary summary) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            summary.caseName ?? '',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: ThemeConfig.navyBlue,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: ThemeConfig.navyBlue.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Status: ${summary.caseStatus ?? ''}',
-              style: TextStyle(
-                color: ThemeConfig.navyBlue.withValues(alpha: 0.8),
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
