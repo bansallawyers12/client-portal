@@ -35,43 +35,23 @@ class WorkflowStagesScreen extends StatefulWidget {
   State<WorkflowStagesScreen> createState() => _WorkflowStagesScreenState();
 }
 
-class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
-    with TickerProviderStateMixin {
+class _WorkflowStagesScreenState extends State<WorkflowStagesScreen> {
   WorkflowStagesResponse? _workflowResponse;
   bool _isLoading = true;
   String? _error;
-
-  late TabController _tabController;
 
   final ImagePicker _imagePicker = ImagePicker();
 
   Uint8List? _selectedFileBytes;
   String? _selectedFileName;
 
-  final List<String> _tabs = ['all', 'pending', 'completed'];
-
   @override
   void initState() {
     super.initState();
-
-    _tabController = TabController(length: 3, vsync: this);
-
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        _loadWorkflowData(type: _tabs[_tabController.index]);
-      }
-    });
-
-    _loadWorkflowData(type: 'all');
+    _loadWorkflowData();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadWorkflowData({String type = 'all'}) async {
+  Future<void> _loadWorkflowData() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -80,7 +60,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
     try {
       final response = await ApiService.getWorkflowStages(
         clientMatterId: widget.matterID ?? 0,
-        type: type,
+        type: 'all',
       );
 
       if (response['success'] == true && response['data'] != null) {
@@ -318,7 +298,7 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
           ),
         );
 
-        await _loadWorkflowData(type: _tabs[_tabController.index]);
+        await _loadWorkflowData();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -402,169 +382,60 @@ class _WorkflowStagesScreenState extends State<WorkflowStagesScreen>
 
   @override
   Widget build(BuildContext context) {
-    // KEY FIX: ScrollConfiguration wraps the entire Scaffold so the scroll
-    // hit-area covers 100% of the screen, not just the constrained content box.
     return ScrollConfiguration(
       behavior: _WebScrollBehavior(),
       child: Scaffold(
         backgroundColor: const Color(0xFFF0F2F5),
-
         appBar: CommonAppBar(
           titleName: 'Workflow Stages',
           matterID: widget.matterID ?? 0,
         ),
-
         body: SafeArea(
-          child: Column(
-            children: [
-              // Tab bar is visually centred but does NOT constrain the
-              // scrollable area below it.
-              Align(
-                alignment: Alignment.center,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AppResponsive.maxContentWidth,
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      isScrollable: false,
-                      dividerColor: Colors.transparent,
-                      labelPadding: EdgeInsets.zero,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        color: ThemeConfig.goldenYellow,
-                        boxShadow: [
-                          BoxShadow(
-                            color: ThemeConfig.goldenYellow.withValues(
-                              alpha: 0.35,
-                            ),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+          child: _isLoading
+              ? const Center(child: AppLoader())
+              : _error != null
+              ? _buildErrorWidget(_error!, _loadWorkflowData)
+              : _workflowResponse == null
+              ? const Center(child: Text('No workflow data available'))
+              : RefreshIndicator(
+                color: ThemeConfig.goldenYellow,
+                onRefresh: _loadWorkflowData,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final sidePadding =
+                        constraints.maxWidth > AppResponsive.maxContentWidth
+                            ? (constraints.maxWidth -
+                                    AppResponsive.maxContentWidth) /
+                                2
+                            : 0.0;
+
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        sidePadding +
+                            AppResponsive.pagePadding(context).left,
+                        AppResponsive.pagePadding(context).top,
+                        sidePadding +
+                            AppResponsive.pagePadding(context).right,
+                        AppResponsive.pagePadding(context).bottom,
                       ),
-                      labelColor: ThemeConfig.navyBlue,
-                      unselectedLabelColor: ThemeConfig.navyBlue.withValues(
-                        alpha: 0.50,
+                      child: WorkflowProgressWidget(
+                        workflowResponse: _workflowResponse!,
+                        tabType: 'all',
+                        stagesExpanded: true,
+                        onSeeAllTap: null,
+                        onSeeLessTap: null,
+                        onStageTap: _showStageDetails,
+                        onChecklistPlusTap: _openUploadOptions,
+                        onChecklistViewTap: _onViewTap,
+                        onBulkUploadTap: null,
                       ),
-                      labelStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.1,
-                      ),
-                      unselectedLabelStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.1,
-                      ),
-                      tabs: [
-                        _buildTab("All", 24),
-                        _buildTab("Pending", 8),
-                        _buildTab("Completed", 16),
-                      ],
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
-
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: AppLoader())
-                    : _error != null
-                    ? _buildErrorWidget(
-                  _error!,
-                      () => _loadWorkflowData(
-                    type: _tabs[_tabController.index],
-                  ),
-                )
-                    : _workflowResponse == null
-                    ? const Center(
-                  child: Text('No workflow data available'),
-                )
-                    : RefreshIndicator(
-                  color: ThemeConfig.goldenYellow,
-                  onRefresh: () => _loadWorkflowData(
-                    type: _tabs[_tabController.index],
-                  ),
-                  // KEY FIX: SingleChildScrollView spans full
-                  // screen width; content is centred via
-                  // LayoutBuilder + side padding, same pattern
-                  // used in the messages screen.
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final sidePadding =
-                      constraints.maxWidth >
-                          AppResponsive.maxContentWidth
-                          ? (constraints.maxWidth -
-                          AppResponsive
-                              .maxContentWidth) /
-                          2
-                          : 0.0;
-
-                      return SingleChildScrollView(
-                        physics:
-                        const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(
-                          sidePadding +
-                              AppResponsive.pagePadding(context)
-                                  .left,
-                          AppResponsive.pagePadding(context).top,
-                          sidePadding +
-                              AppResponsive.pagePadding(context)
-                                  .right,
-                          AppResponsive.pagePadding(context)
-                              .bottom,
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            WorkflowProgressWidget(
-                              workflowResponse:
-                              _workflowResponse!,
-                              tabType: _tabs[_tabController.index],
-                              stagesExpanded: true,
-                              onSeeAllTap: null,
-                              onSeeLessTap: null,
-                              onStageTap: _showStageDetails,
-                              onChecklistPlusTap:
-                              _openUploadOptions,
-                              onChecklistViewTap: _onViewTap,
-                              onBulkUploadTap: null,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTab(String label, int count) {
-    return Tab(
-      height: 46,
-      child: Row(mainAxisSize: MainAxisSize.min, children: [Text(label)]),
     );
   }
 

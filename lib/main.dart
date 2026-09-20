@@ -487,7 +487,7 @@ class MyAppWithTheme extends StatelessWidget {
                       as Map<String, dynamic>;
               return BlogDetailScreen(blogId: args['blogId']);
             },
-            '/my-files': (context) => MyFilesScreen(),
+            '/my-files': (context) => const MyFilesScreen(),
             '/english-requirements': (context) => EnglishRequirementScreen(),
             '/pr-calculator': (context) => PRCalculatorScreen(),
             '/student-fund-calculator':
