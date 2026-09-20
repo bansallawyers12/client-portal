@@ -292,15 +292,33 @@ class WorkflowStagesResponse {
 
   /// Client-facing progress from prototype mapping (preferred) or index fallback.
   int get progressPercentage {
+    final stagesCount =
+        totalStages > 0 ? totalStages : workflowStages.length;
+    final index = currentStageIndex;
+    final indexBased = (stagesCount > 0 && index >= 0)
+        ? (((index + 1) / stagesCount) * 100).round().clamp(0, 100)
+        : 0;
+
     final current = currentStage;
     if (current != null) {
-      return current.mappedProgressPercent;
+      final mapped = clientProgressPercent(
+        clientLabel: current.clientLabel,
+        crmName: current.stageName.isNotEmpty ? current.stageName : current.name,
+        fallbackIndexBased: indexBased,
+      );
+      if (mapped > 0) return mapped;
     }
     if (activeStage != null) {
-      return activeStage!.mappedProgressPercent;
+      final mapped = clientProgressPercent(
+        clientLabel: activeStage!.clientLabel,
+        crmName: activeStage!.stageName.isNotEmpty
+            ? activeStage!.stageName
+            : activeStage!.name,
+        fallbackIndexBased: indexBased,
+      );
+      if (mapped > 0) return mapped;
     }
-    if (totalStages == 0 || currentStageIndex < 0) return 0;
-    return ((currentStageIndex / totalStages) * 100).round();
+    return indexBased;
   }
 
   String get currentDisplayName {
@@ -338,6 +356,17 @@ class WorkflowStagesResponse {
   }
 
   int get currentClientStepIndex {
+    final current = currentStage;
+    final crmName = current != null
+        ? (current.stageName.isNotEmpty ? current.stageName : current.name)
+        : (activeStage != null
+            ? (activeStage!.stageName.isNotEmpty
+                ? activeStage!.stageName
+                : activeStage!.name)
+            : null);
+    final mapped = findClientStageMapping(crmName);
+    if (mapped != null) return mapped.step;
+
     final name = currentDisplayName;
     if (name.isEmpty) return -1;
     final steps = clientTimelineSteps;
@@ -349,6 +378,17 @@ class WorkflowStagesResponse {
         (s) => s.toLowerCase().contains('lodged'),
       );
       return lodged >= 0 ? lodged : -1;
+    }
+    // Proportionally map CRM index onto the 9-step client timeline
+    if (currentStageIndex >= 0) {
+      final count =
+          totalStages > 0 ? totalStages : workflowStages.length;
+      if (count > 1) {
+        return ((currentStageIndex / (count - 1)) * (steps.length - 1))
+            .round()
+            .clamp(0, steps.length - 1);
+      }
+      return 0;
     }
     return -1;
   }

@@ -1,7 +1,12 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:client/services/auth_service.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../config/client_stage_mapping.dart';
@@ -47,6 +52,11 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
   // Workflow / case stages
   WorkflowStagesResponse? _workflow;
   bool _isFetchingWorkflow = false;
+  bool _showInlineUpload = false;
+  final GlobalKey _timelineSectionKey = GlobalKey();
+  final ImagePicker _imagePicker = ImagePicker();
+  Uint8List? _selectedFileBytes;
+  String? _selectedFileName;
 
   static const String _notificationsCacheKey = 'myfiles_notifications_v1';
   static const String _actionRequiredCacheKey = 'myfiles_action_required_v1';
@@ -1066,13 +1076,7 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                 ],
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               InkWell(
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/workflow-stages',
-                    arguments: {'matter_id': AuthService.selectedMatterId},
-                  );
-                },
+                onTap: _focusInlineUpload,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 14),
                   child: Row(
@@ -1201,40 +1205,21 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
   Widget _buildCaseStagesSection() {
     if (_workflow == null) return const SizedBox.shrink();
 
-    final steps = _workflow!.clientTimelineSteps;
-    if (steps.isEmpty) return const SizedBox.shrink();
+    final stages = _workflow!.workflowStages;
+    if (stages.isEmpty) return const SizedBox.shrink();
 
-    final currentStep = _workflow!.currentClientStepIndex;
-    final progress = _workflow!.progressPercentage.clamp(0, 100);
-    final statusTag = _workflow!.currentStatusTag;
-    final stageTitle =
-        _workflow!.currentDisplayName.isNotEmpty
-            ? _workflow!.currentDisplayName
-            : 'Getting started';
-    final updatedLabel = _formatStageUpdated(
-      _workflow!.activeStage?.stageUpdatedAt ??
-          _workflow!.currentStage?.updatedAt,
-    );
-    final hasOpenTasks =
-        (_workflow!.currentStage?.allowedChecklistCount ?? 0) > 0;
-    final isDept = statusTag == ClientStageTag.dept;
+    final currentIndex = _workflow!.currentStageIndex;
+    final previewCount = currentIndex >= 0
+        ? (currentIndex + 1).clamp(1, stages.length)
+        : stages.length.clamp(0, 4);
+    final previewStages = stages.take(previewCount).toList();
 
     return Column(
+      key: _timelineSectionKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionHeader(
-          'Your application',
-          onViewAll: () {
-            Navigator.pushNamed(
-              context,
-              '/workflow-stages',
-              arguments: {'matter_id': AuthService.selectedMatterId},
-            );
-          },
-        ),
-        // Prototype-style current stage hero
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -1252,140 +1237,62 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Current stage',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF7A8794),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusTag.background,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
+                  const Expanded(
                     child: Text(
-                      statusTag.label,
+                      'TIMELINE',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: statusTag.foreground,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                stageTitle,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF12253A),
-                  letterSpacing: -0.2,
-                  height: 1.25,
-                ),
-              ),
-              if (isDept) ...[
-                const SizedBox(height: 6),
-                const Text(
-                  'Your file is with the Department of Home Affairs.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF7A8794),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  value: progress / 100,
-                  minHeight: 6,
-                  backgroundColor: const Color(0xFFF4F6F9),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF1F8A5B),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    '$progress% complete',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF7A8794),
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                  const Spacer(),
-                  if (updatedLabel != null)
-                    Text(
-                      updatedLabel,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.7,
                         color: Color(0xFF7A8794),
                       ),
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/workflow-stages',
+                        arguments: {
+                          'matter_id': AuthService.selectedMatterId,
+                        },
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: ThemeConfig.goldenYellow,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      'View all',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Full client timeline (all 9 steps like prototype)
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E7ED)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 2, bottom: 10),
-                child: Text(
-                  'TIMELINE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.7,
-                    color: Color(0xFF7A8794),
-                  ),
+              const SizedBox(height: 8),
+              for (int i = 0; i < previewStages.length; i++)
+                _submittedStageCard(
+                  stage: previewStages[i],
+                  stageIndex: i,
+                  currentIndex: currentIndex,
+                  isLast: i == previewStages.length - 1,
+                  showChecklists: previewStages[i].isCurrentStage ||
+                      previewStages[i].isActive ||
+                      i == currentIndex,
                 ),
-              ),
-              for (int i = 0; i < steps.length; i++)
-                _clientTimelineRow(
-                  label: steps[i],
-                  number: i + 1,
-                  isLast: i == steps.length - 1,
-                  currentIndex: currentStep,
-                  stepIndex: i,
-                ),
-              if (!hasOpenTasks)
+              if (_showInlineUpload &&
+                  currentIndex >= 0 &&
+                  currentIndex < stages.length &&
+                  stages[currentIndex].allowedChecklist.isEmpty)
                 const Padding(
-                  padding: EdgeInsets.fromLTRB(4, 2, 4, 10),
+                  padding: EdgeInsets.fromLTRB(4, 8, 4, 4),
                   child: Text(
-                    'Nothing needed from you right now — we’ll notify you of any updates.',
+                    'No checklist items on the current stage yet. Tap View all for full workflow.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
@@ -1402,71 +1309,54 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
     );
   }
 
-  String? _formatStageUpdated(String? raw) {
-    if (raw == null || raw.trim().isEmpty) return null;
-    try {
-      final dt = DateTime.tryParse(raw.replaceFirst(' ', 'T'));
-      if (dt == null) return null;
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return 'Updated ${dt.day} ${months[dt.month - 1]}';
-    } catch (_) {
-      return null;
-    }
+  void _focusInlineUpload() {
+    setState(() => _showInlineUpload = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _timelineSectionKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+      }
+    });
   }
 
-  Widget _clientTimelineRow({
-    required String label,
-    required int number,
-    required bool isLast,
+  Widget _submittedStageCard({
+    required WorkflowStage stage,
+    required int stageIndex,
     required int currentIndex,
-    required int stepIndex,
+    required bool isLast,
+    required bool showChecklists,
   }) {
-    final isCompleted = currentIndex >= 0 && stepIndex < currentIndex;
-    final isCurrent = currentIndex >= 0 && stepIndex == currentIndex;
+    final isCurrent =
+        stage.isCurrentStage || stage.isActive || stageIndex == currentIndex;
+    final isCompleted = currentIndex >= 0 && stageIndex < currentIndex;
+    final accent = isCompleted
+        ? const Color(0xFF22C55E)
+        : (isCurrent ? ThemeConfig.navyBlue : const Color(0xFFCBD5E1));
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 22,
+            width: 28,
             child: Column(
               children: [
                 Container(
-                  width: 18,
-                  height: 18,
+                  width: 22,
+                  height: 22,
                   decoration: BoxDecoration(
-                    color: isCompleted
-                        ? const Color(0xFF1F8A5B)
-                        : Colors.white,
+                    color: isCompleted ? accent : Colors.white,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isCompleted
-                          ? const Color(0xFF1F8A5B)
-                          : (isCurrent
-                              ? const Color(0xFF3B6EA5)
-                              : const Color(0xFFE2E7ED)),
-                      width: 2,
-                    ),
+                    border: Border.all(color: accent, width: isCurrent ? 2.5 : 2),
                     boxShadow: isCurrent
                         ? [
                           BoxShadow(
-                            color: const Color(
-                              0xFF3B6EA5,
-                            ).withValues(alpha: 0.22),
+                            color: ThemeConfig.navyBlue.withValues(alpha: 0.2),
                             blurRadius: 0,
                             spreadRadius: 3,
                           ),
@@ -1477,15 +1367,15 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                   child: isCompleted
                       ? const Icon(
                         Icons.check_rounded,
-                        size: 11,
+                        size: 13,
                         color: Colors.white,
                       )
                       : (isCurrent
                           ? Container(
-                            width: 7,
-                            height: 7,
+                            width: 8,
+                            height: 8,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF3B6EA5),
+                              color: ThemeConfig.navyBlue,
                               shape: BoxShape.circle,
                             ),
                           )
@@ -1504,27 +1394,287 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 6 : 14),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                  color: isCurrent
-                      ? const Color(0xFF12253A)
-                      : (isCompleted
-                          ? const Color(0xFF7A8794)
-                          : const Color(0xFF3A4B5E)),
-                  height: 1.3,
+            child: Container(
+              margin: EdgeInsets.only(bottom: isLast ? 4 : 12),
+              padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+              decoration: BoxDecoration(
+                color: isCurrent
+                    ? ThemeConfig.navyBlue.withValues(alpha: 0.05)
+                    : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isCurrent ? ThemeConfig.navyBlue : const Color(0xFFE2E7ED),
+                  width: isCurrent ? 1.5 : 1,
                 ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${stage.displayName} (${stage.allowedChecklistCount})',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: isCurrent
+                          ? ThemeConfig.navyBlue
+                          : const Color(0xFF1F2937),
+                      height: 1.3,
+                    ),
+                  ),
+                  if (showChecklists && stage.allowedChecklist.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ...stage.allowedChecklist.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 3),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_rounded,
+                              size: 14,
+                              color: item.noOfDocumentUploaded == 0
+                                  ? Colors.red.shade400
+                                  : const Color(0xFF22C55E),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '${item.name} (${item.noOfDocumentUploaded})',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isCurrent
+                                      ? ThemeConfig.navyBlue
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                            ),
+                            if (item.noOfDocumentUploaded > 0)
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                icon: const Icon(
+                                  Icons.remove_red_eye_outlined,
+                                  color: Color(0xFF22C55E),
+                                  size: 20,
+                                ),
+                                onPressed: () => _onViewChecklistDocs(stage, item.id),
+                              ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(
+                                Icons.add_circle_rounded,
+                                color: Color(0xFF22C55E),
+                                size: 20,
+                              ),
+                              onPressed: () => _openUploadOptions(stage, item.id),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ] else if (isCompleted && stage.allowedChecklistCount > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${stage.allowedChecklistCount} document item(s) submitted',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: Color(0xFF7A8794),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _openUploadOptions(WorkflowStage stage, int checklistId) async {
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Text(
+                  'Add Files',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.folder_open_rounded, color: Color(0xFF5B8DEF)),
+                  title: const Text('My Files'),
+                  subtitle: const Text('PDF, DOC, DOCX, JPG, PNG'),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    await _pickFromFiles(stage, checklistId);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_rounded, color: Color(0xFF8B5CF6)),
+                  title: const Text('Gallery'),
+                  subtitle: const Text('Pick from your photos'),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    await _pickFromGallery(stage, checklistId);
+                  },
+                ),
+                if (!kIsWeb)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.document_scanner_rounded,
+                      color: Color(0xFF10B981),
+                    ),
+                    title: const Text('Scan Documents'),
+                    subtitle: const Text('Auto-crop & capture pages as PDF'),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await _scanDocuments(stage, checklistId);
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickFromFiles(WorkflowStage stage, int checklistId) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
+    _selectedFileBytes = file.bytes;
+    _selectedFileName = file.name;
+    await _uploadDocument(stage, checklistId);
+  }
+
+  Future<void> _pickFromGallery(WorkflowStage stage, int checklistId) async {
+    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    _selectedFileBytes = await image.readAsBytes();
+    _selectedFileName = image.name;
+    await _uploadDocument(stage, checklistId);
+  }
+
+  Future<void> _scanDocuments(WorkflowStage stage, int checklistId) async {
+    try {
+      final paths = await CunningDocumentScanner.getPictures(asPdf: true);
+      if (paths == null || paths.isEmpty) return;
+      _selectedFileBytes = await File(paths.first).readAsBytes();
+      _selectedFileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      await _uploadDocument(stage, checklistId);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Scan failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _uploadDocument(WorkflowStage stage, int checklistId) async {
+    if (_selectedFileBytes == null || _selectedFileName == null) return;
+    final matterId = AuthService.selectedMatterId ?? 0;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Dialog(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 24, height: 24, child: AppLoader(size: 20)),
+              SizedBox(width: 14),
+              Text('Uploading document...'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final response = await ApiService.uploadWorkflowChecklistDocument(
+        fileBytes: _selectedFileBytes!,
+        fileName: _selectedFileName!,
+        allowedChecklistId: checklistId,
+        clientMatterId: matterId,
+      );
+      if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+
+      if (!mounted) return;
+      if (response['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Document uploaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _fetchWorkflow(forceRefresh: true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'Upload failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted && Navigator.canPop(context)) Navigator.pop(context);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _onViewChecklistDocs(WorkflowStage stage, int checklistId) {
+    if (stage.allowedChecklistCount <= 0) return;
+    Navigator.pushNamed(
+      context,
+      '/workflow-view-documents-by-checklist',
+      arguments: {
+        'matter_id': AuthService.selectedMatterId,
+        'stageId': stage.id,
+        'stageName': stage.displayName,
+        'checklistId': checklistId,
+      },
     );
   }
 

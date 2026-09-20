@@ -173,6 +173,51 @@ const List<ClientStageMapping> kClientStageMap = [
     tag: ClientStageTag.done,
     pct: 100,
   ),
+  // Live CRM stage names used by some matters (aliases)
+  ClientStageMapping(
+    crm: 'Cost Agreement, form 956 and First email Sent',
+    cli: 'Sign your agreement',
+    step: 1,
+    tag: ClientStageTag.action,
+    pct: 12,
+  ),
+  ClientStageMapping(
+    crm: 'Cost Agreement, form 956 Received',
+    cli: 'Setting up your file',
+    step: 2,
+    tag: ClientStageTag.bansal,
+    pct: 20,
+  ),
+  ClientStageMapping(
+    crm: 'Pending documents and payment requested',
+    cli: 'Documents needed',
+    step: 3,
+    tag: ClientStageTag.action,
+    pct: 30,
+  ),
+  ClientStageMapping(
+    crm: 'Documents Completed and Preparing for Lodgement',
+    cli: 'Preparing your application',
+    step: 4,
+    tag: ClientStageTag.bansal,
+    pct: 42,
+  ),
+  ClientStageMapping(
+    crm: 'Verification: Payment, Service Agreement, Forms',
+    cli: 'Preparing your application',
+    step: 4,
+    tag: ClientStageTag.bansal,
+    pct: 48,
+    silent: true,
+  ),
+  ClientStageMapping(
+    crm:
+        'Ready for Lodgement/Draft Application sent for confirmation',
+    cli: 'Review your draft',
+    step: 5,
+    tag: ClientStageTag.action,
+    pct: 55,
+  ),
 ];
 
 ClientStageMapping? findClientStageMapping(String? crmName) {
