@@ -826,12 +826,11 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (AuthService.isAuthenticated) _buildCaseUpdateCard(),
-        if (_actionRequiredCount > 0) _buildActionRequiredBanner(),
         quickActionsCard,
         const SizedBox(height: 10),
         if (AuthService.isAuthenticated) ...[
-          _buildActionsAssignedSection(),
           _buildDocumentsUploadSection(),
+          _buildActionsAssignedSection(),
           _buildTimelineSection(),
         ],
         if (!AuthService.isAuthenticated) _buildGuestPrompt(),
@@ -1281,6 +1280,11 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
 
     final stage = currentStage;
 
+    // Hide the entire section if all tasks have been uploaded
+    final pendingTasks =
+        stage.allowedChecklist.where((i) => i.noOfDocumentUploaded == 0).toList();
+    if (pendingTasks.isEmpty) return const SizedBox.shrink();
+
     return Column(
       key: _documentsSectionKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1352,7 +1356,9 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              ...stage.allowedChecklist.map((item) {
+              ...stage.allowedChecklist
+                  .where((item) => item.noOfDocumentUploaded == 0)
+                  .map((item) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Container(
@@ -1383,52 +1389,27 @@ class _MyFilesTabScreenState extends State<MyFilesTabScreen>
                                 ),
                               ),
                             ),
-                            if (item.noOfDocumentUploaded > 0)
-                              Text(
-                                '${item.noOfDocumentUploaded} uploaded',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: Color(0xFF1F8A5B),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                           ],
                         ),
                         const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            if (item.noOfDocumentUploaded > 0)
-                              TextButton.icon(
-                                onPressed: () =>
-                                    _onViewChecklistDocs(stage, item.id),
-                                icon: const Icon(
-                                  Icons.remove_red_eye_outlined,
-                                  size: 18,
-                                ),
-                                label: const Text('View'),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF1F8A5B),
-                                ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                _openUploadOptions(stage, item.id),
+                            icon: const Icon(Icons.upload_rounded, size: 18),
+                            label: const Text('Upload document'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: ThemeConfig.navyBlue,
+                              side: const BorderSide(
+                                color: ThemeConfig.navyBlue,
                               ),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () =>
-                                    _openUploadOptions(stage, item.id),
-                                icon: const Icon(Icons.upload_rounded, size: 18),
-                                label: const Text('Upload document'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: ThemeConfig.navyBlue,
-                                  side: const BorderSide(
-                                    color: ThemeConfig.navyBlue,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
