@@ -1361,7 +1361,7 @@ class ApiService {
     final url = ApiConfig.visaEstimateEstimate;
 
     final body = {
-      "visa_id": visaId,
+      "visa_id": int.tryParse(visaId) ?? visaId,
       "additional_applicants_18_plus": additional18Plus,
       "additional_applicants_u18": additionalU18,
     };
